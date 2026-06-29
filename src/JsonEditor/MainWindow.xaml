@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:vm="clr-namespace:JsonEditor.ViewModels"
     xmlns:val="clr-namespace:JsonEditor.Validation"
-    Title="JSON Editor" Width="980" Height="700"
+    Title="JSON Editor" Width="760" Height="560"
     Icon="pack://application:,,,/icon.ico"
     FontFamily="{StaticResource UiFont}"
     Background="{StaticResource WindowBg}"
@@ -96,7 +96,7 @@
         <Border DockPanel.Dock="Top" Background="{StaticResource Toolbar}"
                 BorderBrush="{StaticResource Hairline}" BorderThickness="0,0,0,1" Padding="14,10">
             <DockPanel>
-                <TextBox DockPanel.Dock="Right" Style="{StaticResource SearchBox}" Width="240" Height="32"
+                <TextBox DockPanel.Dock="Right" Style="{StaticResource SearchBox}" Width="140" Height="26"
                          Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"/>
                 <StackPanel Orientation="Horizontal">
                     <TextBlock VerticalAlignment="Center" Margin="0,0,20,0" FontSize="20">
