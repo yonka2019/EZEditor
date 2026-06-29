@@ -5,7 +5,7 @@
     xmlns:vm="clr-namespace:JsonEditor.ViewModels"
     xmlns:val="clr-namespace:JsonEditor.Validation"
     Title="JSON Editor" Width="760" Height="560"
-    Icon="pack://application:,,,/icon.ico"
+    Icon="pack://application:,,,/JsonEditor;component/icon.ico"
     FontFamily="{StaticResource UiFont}"
     Background="{StaticResource WindowBg}"
     TextOptions.TextFormattingMode="Ideal">

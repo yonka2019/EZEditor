@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <IsPackable>false</IsPackable>
+    <UseWPF>true</UseWPF>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +18,8 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <!-- UseWPF switches to the Windows-desktop implicit-usings set, which omits System.IO. -->
+    <Using Include="System.IO" />
   </ItemGroup>
 
   <ItemGroup>
