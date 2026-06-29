@@ -40,11 +40,14 @@
                     </ContextMenu>
                 </StackPanel.ContextMenu>
 
-                <!-- Key: editable for object members; index/root label otherwise -->
+                <!-- Key: editable for object members; index/root label otherwise.
+                     Hovering the key (not the value) reveals the field's type. -->
                 <TextBox Style="{StaticResource KeyEditor}"
                          Text="{Binding Name, UpdateSourceTrigger=LostFocus}"
+                         ToolTip="{Binding Kind}" ToolTipService.InitialShowDelay="400"
                          Visibility="{Binding IsObjectMember, Converter={StaticResource BoolToVis}}"/>
                 <TextBlock Style="{StaticResource IndexLabel}" Text="{Binding DisplayName}"
+                           ToolTip="{Binding Kind}" ToolTipService.InitialShowDelay="400"
                            Visibility="{Binding IsObjectMember, Converter={StaticResource InverseBoolToVis}}"/>
 
                 <TextBlock Text=":" Foreground="{StaticResource TextMuted}" FontFamily="{StaticResource MonoFont}"
@@ -60,7 +63,9 @@
                     <TextBox.Text>
                         <Binding Path="Value" UpdateSourceTrigger="PropertyChanged">
                             <Binding.ValidationRules>
-                                <val:NumberValidationRule ValidatesOnTargetUpdated="True" />
+                                <!-- Validate only what the user types (target->source), not values
+                                     pushed from the model on load/type-change. -->
+                                <val:NumberValidationRule ValidatesOnTargetUpdated="False" />
                             </Binding.ValidationRules>
                         </Binding>
                     </TextBox.Text>
@@ -94,7 +99,7 @@
                 <TextBox DockPanel.Dock="Right" Style="{StaticResource SearchBox}" Width="240" Height="32"
                          Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"/>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock VerticalAlignment="Center" Margin="0,0,20,0">
+                    <TextBlock VerticalAlignment="Center" Margin="0,0,20,0" FontSize="20">
                         <Run Text="JSON" FontWeight="SemiBold" Foreground="#82AAFF"/><Run Text=" Editor" Foreground="#E6E9F2"/>
                     </TextBlock>
                     <Button Style="{StaticResource ToolbarButton}" Content="Open" Command="{Binding OpenCommand}"/>
@@ -102,6 +107,9 @@
                     <Button Style="{StaticResource ToolbarButton}" Content="Save As" Command="{Binding SaveAsCommand}"/>
                     <Button Style="{StaticResource ToolbarButton}" Content="Reload" Command="{Binding ReloadCommand}"
                             ToolTip="Reload from disk (Ctrl+R)"/>
+                    <Border Width="1" Margin="6,5,12,5" Background="{StaticResource Hairline}"/>
+                    <Button Style="{StaticResource ToolbarButton}" Content="Open Externally" Click="OnOpenExternally"
+                            ToolTip="Open the current file in Notepad++ (if installed), otherwise the default app"/>
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -109,8 +117,12 @@
         <!-- Status bar -->
         <Border DockPanel.Dock="Bottom" Background="{StaticResource Toolbar}"
                 BorderBrush="{StaticResource Hairline}" BorderThickness="0,1,0,0" Padding="16,7">
-            <TextBlock Text="{Binding StatusText}" Foreground="{StaticResource TextMuted}"
-                       FontFamily="{StaticResource MonoFont}" FontSize="12"/>
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Right" Text="by yonka" Foreground="{StaticResource TextMuted}"
+                           FontFamily="{StaticResource MonoFont}" FontSize="12" Opacity="0.85"/>
+                <TextBlock Text="{Binding StatusText}" Foreground="{StaticResource TextMuted}"
+                           FontFamily="{StaticResource MonoFont}" FontSize="12"/>
+            </DockPanel>
         </Border>
 
         <!-- Tree -->

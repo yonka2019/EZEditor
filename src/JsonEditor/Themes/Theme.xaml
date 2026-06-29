@@ -8,8 +8,6 @@
     <conv:StringBoolConverter x:Key="StrBool" />
     <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
     <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis" />
-    <conv:KindToBrushConverter x:Key="KindToBrush" />
-    <conv:KindToTagConverter x:Key="KindToTag" />
 
     <!-- ============================== Palette =============================== -->
     <SolidColorBrush x:Key="WindowBg"     Color="#0F1116" />
@@ -26,8 +24,6 @@
     <SolidColorBrush x:Key="NumberColor"  Color="#F0A35E" />
     <SolidColorBrush x:Key="BoolColor"    Color="#C99BF0" />
     <SolidColorBrush x:Key="NullColor"    Color="#66708A" />
-    <SolidColorBrush x:Key="StructColor"  Color="#8BA0C9" />
-    <SolidColorBrush x:Key="ChipBg"       Color="#1B2130" />
     <SolidColorBrush x:Key="EditorHover"  Color="#1A1E29" />
 
     <FontFamily x:Key="MonoFont">Cascadia Code, Consolas</FontFamily>
@@ -88,7 +84,7 @@
             <Setter.Value>
                 <ControlTemplate>
                     <Grid>
-                        <Border BorderBrush="#FF6B6B" BorderThickness="1.4" CornerRadius="4" />
+                        <Border BorderBrush="#FF6B6B" BorderThickness="1.4" CornerRadius="4" Margin="-2" />
                         <AdornedElementPlaceholder />
                     </Grid>
                 </ControlTemplate>
@@ -110,16 +106,6 @@
         <Setter Property="Foreground" Value="{StaticResource TextMuted}" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="Margin" Value="6,0,0,0" />
-    </Style>
-
-    <!-- ============================== Type chip ============================ -->
-    <Style x:Key="TypeChip" TargetType="Border">
-        <Setter Property="Background" Value="{StaticResource ChipBg}" />
-        <Setter Property="CornerRadius" Value="4" />
-        <Setter Property="Padding" Value="6,1" />
-        <Setter Property="Margin" Value="0,0,8,0" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-        <Setter Property="MinWidth" Value="34" />
     </Style>
 
     <!-- ============================ Toolbar button ========================= -->
@@ -163,7 +149,7 @@
                     <Border x:Name="bd" Background="{StaticResource WindowBg}"
                             BorderBrush="{StaticResource Hairline}" BorderThickness="1" CornerRadius="6">
                         <Grid>
-                            <TextBlock x:Name="ph" Text="Filter keys…" Foreground="{StaticResource TextMuted}"
+                            <TextBlock x:Name="ph" Text="Filter…" Foreground="{StaticResource TextMuted}"
                                        Margin="10,0" VerticalAlignment="Center" IsHitTestVisible="False"
                                        Visibility="Collapsed" />
                             <ScrollViewer x:Name="PART_ContentHost" Margin="10,0" Focusable="False"
@@ -290,7 +276,7 @@
                         </Border>
 
                         <ToggleButton x:Name="Expander" Grid.Row="0" Grid.Column="0"
-                                      Style="{StaticResource TreeChevron}" ClickMode="Press"
+                                      Style="{StaticResource TreeChevron}"
                                       VerticalAlignment="Center"
                                       IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}" />
 

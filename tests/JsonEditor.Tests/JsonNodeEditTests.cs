@@ -51,6 +51,20 @@ public class JsonNodeEditTests
         Assert.Equal("0", n.Value);
     }
 
+    [Theory]
+    [InlineData("42", "42")]
+    [InlineData("  7  ", "7")]      // trimmed
+    [InlineData("1,000", "0")]      // serializer would destroy it -> rejected here too
+    [InlineData("NaN", "0")]
+    [InlineData("Infinity", "0")]
+    [InlineData("(5)", "0")]
+    public void ChangeKind_Number_OnlyKeepsSerializerValidValues(string input, string expected)
+    {
+        var n = new JsonNodeViewModel(JsonNodeKind.String, value: input);
+        n.ChangeKind(JsonNodeKind.Number);
+        Assert.Equal(expected, n.Value);
+    }
+
     [Fact]
     public void ChangeKind_ToContainer_ClearsValueAndChildren()
     {

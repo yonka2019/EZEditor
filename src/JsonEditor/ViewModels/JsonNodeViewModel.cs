@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using JsonEditor.Models;
 
@@ -115,9 +114,9 @@ public partial class JsonNodeViewModel : ObservableObject
                 Children.Clear();
                 break;
             case JsonNodeKind.Number:
-                Value = double.TryParse(Value, NumberStyles.Any, CultureInfo.InvariantCulture, out _)
-                    ? Value
-                    : "0";
+                // Use the same predicate as the serializer so a value that survives
+                // the type change is guaranteed to survive Save (no silent -> 0).
+                Value = Services.JsonDocumentService.IsValidNumber(Value) ? Value!.Trim() : "0";
                 Children.Clear();
                 break;
             case JsonNodeKind.Boolean:
@@ -138,19 +137,32 @@ public partial class JsonNodeViewModel : ObservableObject
         Kind = newKind;
     }
 
-    // Recursively applies a case-insensitive key filter. Returns true if this node
-    // or any descendant matches; clears the filter when text is empty.
+    // Remembers the user's expansion state so a filter can force-expand to reveal
+    // matches and then restore the original state when the filter is cleared.
+    private bool? _expandedBeforeFilter;
+
+    // Recursively applies a case-insensitive filter over keys AND values. Returns
+    // true if this node or any descendant matches; clears the filter when text is empty.
     public bool ApplyFilter(string? text)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
             IsFilteredOut = false;
+            if (_expandedBeforeFilter is bool previous)
+            {
+                IsExpanded = previous;
+                _expandedBeforeFilter = null;
+            }
             foreach (var c in Children) c.ApplyFilter(null);
             return true;
         }
 
-        var selfMatch = Name is not null &&
-                        Name.Contains(text, StringComparison.OrdinalIgnoreCase);
+        // A null node has no Value text; treat it as the literal "null" so a "null"
+        // search matches both real-null nodes and string values containing "null".
+        var valueText = Kind == JsonNodeKind.Null ? "null" : Value;
+        var selfMatch =
+            (Name is not null && Name.Contains(text, StringComparison.OrdinalIgnoreCase)) ||
+            (valueText is not null && valueText.Contains(text, StringComparison.OrdinalIgnoreCase));
 
         var childMatch = false;
         foreach (var c in Children)
@@ -161,7 +173,11 @@ public partial class JsonNodeViewModel : ObservableObject
 
         var matched = selfMatch || childMatch;
         IsFilteredOut = !matched;
-        if (matched) IsExpanded = true;
+        if (matched && Children.Count > 0)
+        {
+            _expandedBeforeFilter ??= IsExpanded; // snapshot once, before forcing open
+            IsExpanded = true;
+        }
         return matched;
     }
 

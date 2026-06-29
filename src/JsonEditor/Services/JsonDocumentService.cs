@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Text.Json;
@@ -101,13 +100,26 @@ public class JsonDocumentService
         }
     }
 
-    // True when the text is a valid, finite JSON number. Shared by the serializer
-    // (crash-safety backstop) and the number-field validation rule.
+    // True when the text is a valid JSON number token. Validates the JSON number
+    // *grammar* (not double range/precision) so large/high-precision values like
+    // 1e500 round-trip byte-for-byte instead of being coerced to 0. Shared by the
+    // serializer (crash-safety backstop) and the number-field validation rule.
     public static bool IsValidNumber(string? s)
-        => !string.IsNullOrWhiteSpace(s)
-           && double.TryParse(s, NumberStyles.Float | NumberStyles.AllowLeadingSign,
-                  CultureInfo.InvariantCulture, out var d)
-           && double.IsFinite(d);
+    {
+        if (string.IsNullOrWhiteSpace(s)) return false;
+        var bytes = Encoding.UTF8.GetBytes(s.Trim());
+        var reader = new Utf8JsonReader(bytes);
+        try
+        {
+            return reader.Read()
+                   && reader.TokenType == JsonTokenType.Number
+                   && reader.BytesConsumed == bytes.Length;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
 
     public JsonNodeViewModel Load(string path) => Parse(File.ReadAllText(path));
 

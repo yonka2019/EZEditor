@@ -82,7 +82,7 @@ public partial class MainViewModel : ObservableObject
         {
             _prompt.Error($"Could not parse JSON:\n{ex.Message}");
         }
-        catch (IOException ex)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             _prompt.Error($"Could not open file:\n{ex.Message}");
         }
@@ -113,7 +113,8 @@ public partial class MainViewModel : ObservableObject
             CurrentPath = path;
             IsDirty = false;
         }
-        catch (Exception ex) when (ex is IOException or JsonException)
+        catch (Exception ex) when (ex is IOException or JsonException
+                                     or UnauthorizedAccessException or InvalidOperationException)
         {
             _prompt.Error($"Could not save file:\n{ex.Message}");
         }
@@ -132,7 +133,7 @@ public partial class MainViewModel : ObservableObject
         {
             _prompt.Error($"Could not parse JSON:\n{ex.Message}");
         }
-        catch (IOException ex)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             _prompt.Error($"Could not reload file:\n{ex.Message}");
         }

@@ -80,6 +80,56 @@ public class JsonNodeViewModelTests
     }
 
     [Fact]
+    public void ApplyFilter_MatchesValues_NotJustKeys()
+    {
+        var root = new JsonNodeViewModel(JsonNodeKind.Object);
+        var name = new JsonNodeViewModel(JsonNodeKind.String, "name", "Alice", root);
+        var city = new JsonNodeViewModel(JsonNodeKind.String, "city", "Berlin", root);
+        root.Children.Add(name);
+        root.Children.Add(city);
+
+        root.ApplyFilter("alice"); // matches the VALUE of "name", not its key
+
+        Assert.False(name.IsFilteredOut);
+        Assert.True(city.IsFilteredOut);
+    }
+
+    [Fact]
+    public void ApplyFilter_Null_MatchesRealNullAndStringNull()
+    {
+        var root = new JsonNodeViewModel(JsonNodeKind.Object);
+        var realNull = new JsonNodeViewModel(JsonNodeKind.Null, "a", null, root);
+        var stringNull = new JsonNodeViewModel(JsonNodeKind.String, "b", "null", root);
+        var number = new JsonNodeViewModel(JsonNodeKind.Number, "c", "5", root);
+        root.Children.Add(realNull);
+        root.Children.Add(stringNull);
+        root.Children.Add(number);
+
+        root.ApplyFilter("null");
+
+        Assert.False(realNull.IsFilteredOut);    // Kind == Null matches "null"
+        Assert.False(stringNull.IsFilteredOut);  // value "null" matches
+        Assert.True(number.IsFilteredOut);       // 5 does not
+    }
+
+    [Fact]
+    public void ApplyFilter_RestoresExpansionState_WhenCleared()
+    {
+        var root = new JsonNodeViewModel(JsonNodeKind.Object);
+        var user = new JsonNodeViewModel(JsonNodeKind.Object, "user", parent: root);
+        root.Children.Add(user);
+        var name = new JsonNodeViewModel(JsonNodeKind.String, "name", "Alice", user);
+        user.Children.Add(name);
+
+        user.IsExpanded = false;   // user deliberately collapses "user"
+        root.ApplyFilter("name");  // a match inside forces it open
+        Assert.True(user.IsExpanded);
+
+        root.ApplyFilter("");      // clearing the filter must restore the collapse
+        Assert.False(user.IsExpanded);
+    }
+
+    [Fact]
     public void ApplyFilter_Empty_ClearsAll()
     {
         var root = new JsonNodeViewModel(JsonNodeKind.Object);
