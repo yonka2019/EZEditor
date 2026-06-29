@@ -1,0 +1,14 @@
+{
+  "name": "Alice",
+  "age": 307,
+  "admin": true,
+  "roles": [
+    "editor",
+    "viewer"
+  ],
+  "address": {
+    "city": "aaTel Avsadf11iv",
+    "zip": "61000"
+  },
+  "note": null
+}
