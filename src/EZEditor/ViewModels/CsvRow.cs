@@ -24,10 +24,11 @@ public sealed class CsvRow : ObservableObject
         }
     }
 
-    internal void AddCell(string value = "") { _cells.Add(value); OnPropertyChanged("Item[]"); }
-    internal void RemoveCellAt(int index)
+    internal void AddCell(string value = "", bool notify = true) { _cells.Add(value); if (notify) OnPropertyChanged("Item[]"); }
+    internal void RemoveCellAt(int index, bool notify = true)
     {
-        if (index >= 0 && index < _cells.Count) _cells.RemoveAt(index);
-        OnPropertyChanged("Item[]");
+        if (index < 0 || index >= _cells.Count) return;
+        _cells.RemoveAt(index);
+        if (notify) OnPropertyChanged("Item[]");
     }
 }

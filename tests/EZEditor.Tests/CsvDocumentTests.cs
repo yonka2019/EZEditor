@@ -84,4 +84,46 @@ public class CsvDocumentTests
         var text = doc.Serialize();
         Assert.Equal("name,note\r\nAlice,\"has,comma\"", text);
     }
+
+    [Fact]
+    public void Parse_NoHeader_NamesColumns_AndKeepsAllRows()
+    {
+        var doc = Make("a,b\n1,2", hasHeader: false);
+        Assert.Equal(new[] { "Column1", "Column2" }, doc.Columns.ToArray());
+        Assert.Equal(2, doc.Rows.Count);
+        Assert.Equal("a", doc.Rows[0][0]);
+    }
+
+    [Fact]
+    public void RenameColumn_UpdatesHeader_AndRaisesColumnsChanged()
+    {
+        var doc = Make("a,b\n1,2");
+        var colsChanged = 0;
+        doc.ColumnsChanged += (_, _) => colsChanged++;
+        doc.RenameColumn(0, "renamed");
+        Assert.Equal("renamed", doc.Columns[0]);
+        Assert.Equal(1, colsChanged);
+    }
+
+    [Fact]
+    public void AddColumn_FiresChangedExactlyOnce()
+    {
+        var doc = Make("a,b\n1,2\n3,4");
+        var fired = 0;
+        doc.Changed += (_, _) => fired++;
+        doc.AddColumn("c");
+        Assert.Equal(1, fired);
+    }
+
+    [Fact]
+    public void DeleteRow_UnsubscribesRow_NoChangedAfter()
+    {
+        var doc = Make("a,b\n1,2");
+        var row = doc.Rows[0];
+        doc.DeleteRow(row);
+        var fired = 0;
+        doc.Changed += (_, _) => fired++;
+        row[0] = "zzz";
+        Assert.Equal(0, fired);
+    }
 }

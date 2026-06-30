@@ -48,7 +48,7 @@ public sealed class CsvDocument : EditableDocument
     public void AddColumn(string name)
     {
         Columns.Add(name);
-        foreach (var r in Rows) r.AddCell();
+        foreach (var r in Rows) r.AddCell(notify: false);
         ColumnsChanged?.Invoke(this, EventArgs.Empty);
         OnChanged();
     }
@@ -65,7 +65,7 @@ public sealed class CsvDocument : EditableDocument
     {
         if (index < 0 || index >= Columns.Count) return;
         Columns.RemoveAt(index);
-        foreach (var r in Rows) r.RemoveCellAt(index);
+        foreach (var r in Rows) r.RemoveCellAt(index, notify: false);
         ColumnsChanged?.Invoke(this, EventArgs.Empty);
         OnChanged();
     }
