@@ -6,6 +6,7 @@ namespace EZEditor.Services;
 public sealed class DocumentFactory
 {
     private readonly JsonDocumentService _json = new();
+    private readonly CsvDocumentService _csv = new();
 
     public EditableDocument LoadAuto(string path)
     {
@@ -16,7 +17,7 @@ public sealed class DocumentFactory
     public EditableDocument Create(DocumentFormat fmt, string text) => fmt switch
     {
         DocumentFormat.Json => new JsonDocument(_json.Parse(text), _json),
-        DocumentFormat.Csv => throw new NotSupportedException("CSV not wired yet"),
+        DocumentFormat.Csv => new CsvDocument(_csv.Parse(text), _csv),
         DocumentFormat.Xml => throw new NotSupportedException("XML not wired yet"),
         _ => throw new NotSupportedException($"Unhandled format {fmt}"),
     };

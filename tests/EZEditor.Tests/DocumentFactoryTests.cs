@@ -40,4 +40,17 @@ public class DocumentFactoryTests
         }
         finally { File.Delete(path); }
     }
+
+    [Fact]
+    public void LoadAuto_CsvFile_ReturnsCsvDocument()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"df_{Guid.NewGuid():N}.csv");
+        File.WriteAllText(path, "name,age\nAlice,30");
+        try
+        {
+            var doc = new DocumentFactory().LoadAuto(path);
+            Assert.IsType<EZEditor.ViewModels.CsvDocument>(doc);
+        }
+        finally { File.Delete(path); }
+    }
 }
