@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/EZEditor/EZEditor.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/EZEditor.Tests/EZEditor.Tests.csproj" />
+  </Folder>
+</Solution>

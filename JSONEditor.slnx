@@ -1,8 +1,0 @@
-<Solution>
-  <Folder Name="/src/">
-    <Project Path="src/JsonEditor/JsonEditor.csproj" />
-  </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/JsonEditor.Tests/JsonEditor.Tests.csproj" />
-  </Folder>
-</Solution>

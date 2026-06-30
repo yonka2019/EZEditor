@@ -1,0 +1,163 @@
+using EZEditor.Models;
+using EZEditor.ViewModels;
+
+namespace EZEditor.Tests;
+
+public class JsonNodeViewModelTests
+{
+    [Fact]
+    public void IsContainer_TrueForObjectAndArray()
+    {
+        Assert.True(new JsonNodeViewModel(JsonNodeKind.Object).IsContainer);
+        Assert.True(new JsonNodeViewModel(JsonNodeKind.Array).IsContainer);
+        Assert.False(new JsonNodeViewModel(JsonNodeKind.String, value: "x").IsContainer);
+    }
+
+    [Fact]
+    public void DisplayName_UsesNameForObjectMembers_AndIndexForArrayElements()
+    {
+        var arr = new JsonNodeViewModel(JsonNodeKind.Array);
+        var a = new JsonNodeViewModel(JsonNodeKind.String, value: "a", parent: arr);
+        var b = new JsonNodeViewModel(JsonNodeKind.String, value: "b", parent: arr);
+        arr.Children.Add(a);
+        arr.Children.Add(b);
+        Assert.Equal("[0]", a.DisplayName);
+        Assert.Equal("[1]", b.DisplayName);
+
+        var obj = new JsonNodeViewModel(JsonNodeKind.Object);
+        var m = new JsonNodeViewModel(JsonNodeKind.String, name: "key", value: "v", parent: obj);
+        Assert.Equal("key", m.DisplayName);
+    }
+
+    [Fact]
+    public void Changed_BubblesFromChildToRoot()
+    {
+        var root = new JsonNodeViewModel(JsonNodeKind.Object);
+        var child = new JsonNodeViewModel(JsonNodeKind.String, name: "k", value: "v", parent: root);
+        root.Children.Add(child);
+
+        var fired = 0;
+        root.Changed += (_, _) => fired++;
+        child.Value = "changed";
+
+        Assert.True(fired >= 1);
+    }
+
+    [Fact]
+    public void IsObjectMember_TrueOnlyForObjectChildren()
+    {
+        var obj = new JsonNodeViewModel(JsonNodeKind.Object);
+        var member = new JsonNodeViewModel(JsonNodeKind.String, "k", "v", obj);
+        obj.Children.Add(member);
+
+        var arr = new JsonNodeViewModel(JsonNodeKind.Array);
+        var elem = new JsonNodeViewModel(JsonNodeKind.String, value: "x", parent: arr);
+        arr.Children.Add(elem);
+
+        Assert.True(member.IsObjectMember);
+        Assert.False(elem.IsObjectMember);
+        Assert.False(obj.IsObjectMember); // root
+    }
+
+    [Fact]
+    public void ApplyFilter_HidesNonMatchingKeys_KeepsMatchAndAncestors()
+    {
+        var root = new JsonNodeViewModel(JsonNodeKind.Object);
+        var user = new JsonNodeViewModel(JsonNodeKind.Object, "user", parent: root);
+        root.Children.Add(user);
+        var name = new JsonNodeViewModel(JsonNodeKind.String, "name", "Alice", user);
+        var age = new JsonNodeViewModel(JsonNodeKind.Number, "age", "30", user);
+        user.Children.Add(name);
+        user.Children.Add(age);
+
+        var matched = root.ApplyFilter("name");
+
+        Assert.True(matched);
+        Assert.False(root.IsFilteredOut);  // ancestor kept
+        Assert.False(user.IsFilteredOut);  // ancestor kept
+        Assert.False(name.IsFilteredOut);  // match
+        Assert.True(age.IsFilteredOut);    // non-match hidden
+    }
+
+    [Fact]
+    public void ApplyFilter_MatchesValues_NotJustKeys()
+    {
+        var root = new JsonNodeViewModel(JsonNodeKind.Object);
+        var name = new JsonNodeViewModel(JsonNodeKind.String, "name", "Alice", root);
+        var city = new JsonNodeViewModel(JsonNodeKind.String, "city", "Berlin", root);
+        root.Children.Add(name);
+        root.Children.Add(city);
+
+        root.ApplyFilter("alice"); // matches the VALUE of "name", not its key
+
+        Assert.False(name.IsFilteredOut);
+        Assert.True(city.IsFilteredOut);
+    }
+
+    [Fact]
+    public void SetExpandedRecursive_AppliesToWholeSubtree()
+    {
+        var root = new JsonNodeViewModel(JsonNodeKind.Object);
+        var child = new JsonNodeViewModel(JsonNodeKind.Object, "c", parent: root);
+        root.Children.Add(child);
+        var leaf = new JsonNodeViewModel(JsonNodeKind.String, "x", "1", child);
+        child.Children.Add(leaf);
+
+        root.SetExpandedRecursive(false);
+        Assert.False(root.IsExpanded);
+        Assert.False(child.IsExpanded);
+        Assert.False(leaf.IsExpanded);
+
+        root.SetExpandedRecursive(true);
+        Assert.True(root.IsExpanded);
+        Assert.True(child.IsExpanded);
+    }
+
+    [Fact]
+    public void ApplyFilter_Null_MatchesRealNullAndStringNull()
+    {
+        var root = new JsonNodeViewModel(JsonNodeKind.Object);
+        var realNull = new JsonNodeViewModel(JsonNodeKind.Null, "a", null, root);
+        var stringNull = new JsonNodeViewModel(JsonNodeKind.String, "b", "null", root);
+        var number = new JsonNodeViewModel(JsonNodeKind.Number, "c", "5", root);
+        root.Children.Add(realNull);
+        root.Children.Add(stringNull);
+        root.Children.Add(number);
+
+        root.ApplyFilter("null");
+
+        Assert.False(realNull.IsFilteredOut);    // Kind == Null matches "null"
+        Assert.False(stringNull.IsFilteredOut);  // value "null" matches
+        Assert.True(number.IsFilteredOut);       // 5 does not
+    }
+
+    [Fact]
+    public void ApplyFilter_RestoresExpansionState_WhenCleared()
+    {
+        var root = new JsonNodeViewModel(JsonNodeKind.Object);
+        var user = new JsonNodeViewModel(JsonNodeKind.Object, "user", parent: root);
+        root.Children.Add(user);
+        var name = new JsonNodeViewModel(JsonNodeKind.String, "name", "Alice", user);
+        user.Children.Add(name);
+
+        user.IsExpanded = false;   // user deliberately collapses "user"
+        root.ApplyFilter("name");  // a match inside forces it open
+        Assert.True(user.IsExpanded);
+
+        root.ApplyFilter("");      // clearing the filter must restore the collapse
+        Assert.False(user.IsExpanded);
+    }
+
+    [Fact]
+    public void ApplyFilter_Empty_ClearsAll()
+    {
+        var root = new JsonNodeViewModel(JsonNodeKind.Object);
+        var a = new JsonNodeViewModel(JsonNodeKind.String, "a", "1", root);
+        root.Children.Add(a);
+        a.IsFilteredOut = true;
+
+        root.ApplyFilter("");
+
+        Assert.False(a.IsFilteredOut);
+    }
+}
