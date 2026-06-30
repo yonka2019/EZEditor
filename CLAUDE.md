@@ -126,9 +126,12 @@ horizontally**; **custom slim dark scrollbar** (fixed-size thumb); shortcuts
   `Themes/Theme.xaml`.
 
 ## Git
-- Remote: `https://github.com/yonka2019/EZEditor.git`, branch **`main`**.
+- Remote: `https://github.com/yonka2019/JSONEditor.git`, branch **`main`**. The GitHub repo was
+  intentionally **not** renamed when the project became EZEditor (local/code/app rename only), so the
+  remote name stays `JSONEditor.git`.
 - **NEVER commit or push without the user's explicit request** (their standing rule). Local commit
-  identity is set to `yonka2019` / `jonatan@cyray.io`. `.gitignore` excludes `bin/`/`obj/`.
+  identity is set to `yonka2019` / `jonatan@cyray.io`. `.gitignore` excludes `bin/`/`obj/`,
+  `publish/`, and `.superpowers/` (SDD scratch).
 
 ## Deferred / known limitations
 - On load, containers deeper than 2 levels start collapsed (`AutoExpandDepth=2` in `JsonDocumentService.Build`) — shows the first two key levels, helps large files.
