@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using EZEditor.Models;
 using EZEditor.ViewModels;
+using STJJsonDocument = System.Text.Json.JsonDocument;
 
 namespace EZEditor.Services;
 
@@ -10,7 +11,7 @@ public class JsonDocumentService
 {
     public JsonNodeViewModel Parse(string json)
     {
-        using var doc = JsonDocument.Parse(json, new JsonDocumentOptions
+        using var doc = STJJsonDocument.Parse(json, new JsonDocumentOptions
         {
             AllowTrailingCommas = true,
             CommentHandling = JsonCommentHandling.Skip
