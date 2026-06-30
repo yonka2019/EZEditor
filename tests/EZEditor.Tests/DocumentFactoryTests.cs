@@ -21,6 +21,13 @@ public class DocumentFactoryTests
     public void Detect_EmptyContent_FallsBackToExtension(string text, string ext, DocumentFormat expected)
         => Assert.Equal(expected, DocumentFactory.Detect(text, ext));
 
+    [Theory]
+    [InlineData("{ broken", ".json", DocumentFormat.Json)]
+    [InlineData("just plain text", ".xml", DocumentFormat.Xml)]
+    [InlineData("just plain text", null, DocumentFormat.Csv)]
+    public void Detect_AmbiguousContent_ExtensionDecides(string text, string? ext, DocumentFormat expected)
+        => Assert.Equal(expected, DocumentFactory.Detect(text, ext));
+
     [Fact]
     public void LoadAuto_JsonFile_ReturnsJsonDocument()
     {

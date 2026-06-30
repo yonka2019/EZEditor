@@ -29,7 +29,7 @@ public sealed class DocumentFactory
         if (t.Length == 0) return ExtFormat(ext);
         if (t[0] == '<') return DocumentFormat.Xml;
         if (LooksLikeJson(t)) return DocumentFormat.Json;
-        return DocumentFormat.Csv;
+        return ExtFormat(ext);   // ambiguous content: extension decides (.json/.xml else CSV)
     }
 
     private static DocumentFormat ExtFormat(string? ext) => ext?.ToLowerInvariant() switch

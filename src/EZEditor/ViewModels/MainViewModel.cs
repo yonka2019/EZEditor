@@ -51,9 +51,9 @@ public partial class MainViewModel : ObservableObject
     public void OpenPath(string path)
     {
         var doc = _factory.LoadAuto(path);
-        FilterText = null;
         CurrentDocument = doc;
         CurrentPath = path;
+        FilterText = null;   // applies to the new document; null clears the filter (no-op on a fresh load)
         IsDirty = false;
     }
 
