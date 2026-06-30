@@ -44,7 +44,7 @@ public partial class MainWindow : Window
     private void OnTreePreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
         if (Keyboard.Modifiers != ModifierKeys.Shift) return;
-        var sv = FindScrollViewer(Tree);
+        var sv = FindScrollViewer((DependencyObject)sender);
         if (sv is null) return;
         sv.ScrollToHorizontalOffset(sv.HorizontalOffset - e.Delta);
         e.Handled = true;

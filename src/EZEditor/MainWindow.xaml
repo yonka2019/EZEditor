@@ -94,6 +94,33 @@
                            Visibility="{Binding Kind, Converter={StaticResource KindToVis}, ConverterParameter=Array}"/>
             </StackPanel>
         </HierarchicalDataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:JsonDocument}">
+            <Border Margin="14" CornerRadius="10" Background="{StaticResource Surface}"
+                    BorderBrush="{StaticResource Hairline}" BorderThickness="1">
+                <TreeView x:Name="Tree" ItemsSource="{Binding Roots}"
+                          ItemContainerStyle="{StaticResource JsonTreeItem}"
+                          Padding="10,8" Margin="2"
+                          Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}"
+                          PreviewMouseWheel="OnTreePreviewMouseWheel"
+                          ScrollViewer.CanContentScroll="True"
+                          VirtualizingPanel.IsVirtualizing="True"
+                          VirtualizingPanel.VirtualizationMode="Recycling"
+                          VirtualizingPanel.ScrollUnit="Item">
+                    <TreeView.Resources>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="#161922"/>
+                    </TreeView.Resources>
+                    <TreeView.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Expand all"
+                                      Command="{Binding PlacementTarget.Tag.ExpandAllCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            <MenuItem Header="Collapse all"
+                                      Command="{Binding PlacementTarget.Tag.CollapseAllCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                        </ContextMenu>
+                    </TreeView.ContextMenu>
+                </TreeView>
+            </Border>
+        </DataTemplate>
     </Window.Resources>
 
     <DockPanel>
@@ -130,30 +157,7 @@
             </DockPanel>
         </Border>
 
-        <!-- Tree -->
-        <Border Margin="14" CornerRadius="10" Background="{StaticResource Surface}"
-                BorderBrush="{StaticResource Hairline}" BorderThickness="1">
-            <TreeView x:Name="Tree" ItemsSource="{Binding Roots}"
-                      ItemContainerStyle="{StaticResource JsonTreeItem}"
-                      Padding="10,8" Margin="2"
-                      PreviewMouseWheel="OnTreePreviewMouseWheel"
-                      ScrollViewer.CanContentScroll="True"
-                      VirtualizingPanel.IsVirtualizing="True"
-                      VirtualizingPanel.VirtualizationMode="Recycling"
-                      VirtualizingPanel.ScrollUnit="Item">
-                <TreeView.Resources>
-                    <!-- Recolor the scrollbar corner (where V/H bars meet) so it isn't a white box on the dark theme. -->
-                    <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="#161922"/>
-                </TreeView.Resources>
-                <TreeView.ContextMenu>
-                    <ContextMenu>
-                        <MenuItem Header="Expand all"
-                                  Command="{Binding PlacementTarget.DataContext.ExpandAllCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                        <MenuItem Header="Collapse all"
-                                  Command="{Binding PlacementTarget.DataContext.CollapseAllCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                    </ContextMenu>
-                </TreeView.ContextMenu>
-            </TreeView>
-        </Border>
+        <!-- Document editor — template selected by CurrentDocument type -->
+        <ContentControl Content="{Binding CurrentDocument}" />
     </DockPanel>
 </Window>
