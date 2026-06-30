@@ -18,7 +18,7 @@ public sealed class DocumentFactory
         DocumentFormat.Json => new JsonDocument(_json.Parse(text), _json),
         DocumentFormat.Csv => throw new NotSupportedException("CSV not wired yet"),
         DocumentFormat.Xml => throw new NotSupportedException("XML not wired yet"),
-        _ => new JsonDocument(_json.Parse(text), _json),
+        _ => throw new NotSupportedException($"Unhandled format {fmt}"),
     };
 
     // Content sniff: leading '<' => XML; else structural JSON => JSON; else CSV.
