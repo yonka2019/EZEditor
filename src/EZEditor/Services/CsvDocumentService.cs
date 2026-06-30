@@ -83,4 +83,31 @@ public sealed class CsvDocumentService
         if (!needs) return field;
         return "\"" + field.Replace("\"", "\"\"") + "\"";
     }
+
+    // Builds columns + CsvRow list. With hasHeader, row 0 supplies column names and
+    // is removed from the data rows; otherwise columns are named "Column1..N".
+    public CsvParseResult Parse(string text, bool hasHeader = true)
+    {
+        var delimiter = DetectDelimiter(text);
+        var raw = ParseRows(text, delimiter);
+        var width = raw.Count == 0 ? 0 : raw.Max(r => r.Count);
+
+        List<string> columns;
+        IEnumerable<List<string>> dataRows;
+        if (hasHeader && raw.Count > 0)
+        {
+            columns = Enumerable.Range(0, width)
+                .Select(i => i < raw[0].Count && raw[0][i].Length > 0 ? raw[0][i] : $"Column{i + 1}")
+                .ToList();
+            dataRows = raw.Skip(1);
+        }
+        else
+        {
+            columns = Enumerable.Range(0, width).Select(i => $"Column{i + 1}").ToList();
+            dataRows = raw;
+        }
+
+        var rows = dataRows.Select(r => new EZEditor.ViewModels.CsvRow(r)).ToList();
+        return new CsvParseResult(columns, rows, delimiter, hasHeader);
+    }
 }
