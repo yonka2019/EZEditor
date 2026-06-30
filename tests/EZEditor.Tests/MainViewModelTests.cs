@@ -24,11 +24,11 @@ public class MainViewModelTests
     {
         d = new FakeDialogs();
         p = new FakePrompt();
-        return new MainViewModel(new JsonDocumentService(), d, p);
+        return new MainViewModel(new DocumentFactory(), d, p);
     }
 
     [Fact]
-    public void OpenPath_LoadsRoot_AndIsNotDirty()
+    public void OpenPath_LoadsJsonDocument_AndIsNotDirty()
     {
         var path = Path.Combine(Path.GetTempPath(), $"mvm_{Guid.NewGuid():N}.json");
         File.WriteAllText(path, """{ "a": 1 }""");
@@ -36,8 +36,9 @@ public class MainViewModelTests
         {
             var vm = Make(out _, out _);
             vm.OpenPath(path);
-            Assert.Single(vm.Roots);
-            Assert.Equal(JsonNodeKind.Object, vm.Roots[0].Kind);
+            Assert.IsType<JsonDocument>(vm.CurrentDocument);
+            Assert.NotNull(vm.JsonRoot);
+            Assert.Equal(JsonNodeKind.Object, vm.JsonRoot!.Kind);
             Assert.False(vm.IsDirty);
             Assert.Equal(path, vm.CurrentPath);
         }
@@ -53,14 +54,14 @@ public class MainViewModelTests
         {
             var vm = Make(out _, out _);
             vm.OpenPath(path);
-            vm.Roots[0].Children[0].Value = "2";
+            vm.JsonRoot!.Children[0].Value = "2";
             Assert.True(vm.IsDirty);
         }
         finally { File.Delete(path); }
     }
 
     [Fact]
-    public void Open_InvalidJson_ShowsError()
+    public void Open_InvalidJson_ShowsError_AndKeepsNoDocument()
     {
         var path = Path.Combine(Path.GetTempPath(), $"mvm_{Guid.NewGuid():N}.json");
         File.WriteAllText(path, "{ broken ");
@@ -70,7 +71,7 @@ public class MainViewModelTests
             d.OpenPath = path;
             vm.OpenCommand.Execute(null);
             Assert.NotNull(p.LastError);
-            Assert.Empty(vm.Roots);
+            Assert.Null(vm.CurrentDocument);
         }
         finally { File.Delete(path); }
     }
@@ -85,7 +86,7 @@ public class MainViewModelTests
         {
             var vm = Make(out var d, out _);
             vm.OpenPath(src);
-            vm.Roots[0].Children[0].Value = "2";
+            vm.JsonRoot!.Children[0].Value = "2";
             Assert.True(vm.IsDirty);
 
             d.SavePath = dest;
@@ -110,15 +111,15 @@ public class MainViewModelTests
         File.WriteAllText(path, """{ "a": 1 }""");
         try
         {
-            var vm = Make(out _, out _); // FakePrompt.Discard defaults to Yes
+            var vm = Make(out _, out _);
             vm.OpenPath(path);
-            vm.Roots[0].Children[0].Value = "999";
+            vm.JsonRoot!.Children[0].Value = "999";
             Assert.True(vm.IsDirty);
 
             vm.ReloadCommand.Execute(null);
 
             Assert.False(vm.IsDirty);
-            Assert.Equal("1", vm.Roots[0].Children[0].Value);
+            Assert.Equal("1", vm.JsonRoot!.Children[0].Value);
         }
         finally { File.Delete(path); }
     }
@@ -133,19 +134,19 @@ public class MainViewModelTests
             var vm = Make(out _, out _);
             vm.OpenPath(path);
             vm.ExpandAllCommand.Execute(null);
-            var user = vm.Roots[0].Children[0];
+            var user = vm.JsonRoot!.Children[0];
             Assert.True(user.IsExpanded);
 
             vm.CollapseAllCommand.Execute(null);
-            Assert.True(vm.Roots[0].IsExpanded);  // root stays open
-            Assert.False(user.IsExpanded);        // nested container collapsed
-            Assert.False(vm.IsDirty);             // expansion changes never dirty the doc
+            Assert.True(vm.JsonRoot!.IsExpanded);
+            Assert.False(user.IsExpanded);
+            Assert.False(vm.IsDirty);
         }
         finally { File.Delete(path); }
     }
 
     [Fact]
-    public void FilterText_AppliesKeyFilterToTree()
+    public void FilterText_AppliesFilterToDocument()
     {
         var path = Path.Combine(Path.GetTempPath(), $"mvm_{Guid.NewGuid():N}.json");
         File.WriteAllText(path, """{ "name": "Alice", "age": 30 }""");
@@ -155,11 +156,25 @@ public class MainViewModelTests
             vm.OpenPath(path);
             vm.FilterText = "age";
 
-            var name = vm.Roots[0].Children.First(c => c.Name == "name");
-            var age = vm.Roots[0].Children.First(c => c.Name == "age");
+            var name = vm.JsonRoot!.Children.First(c => c.Name == "name");
+            var age = vm.JsonRoot!.Children.First(c => c.Name == "age");
             Assert.True(name.IsFilteredOut);
             Assert.False(age.IsFilteredOut);
-            Assert.False(vm.IsDirty); // filtering must not dirty the document
+            Assert.False(vm.IsDirty);
+        }
+        finally { File.Delete(path); }
+    }
+
+    [Fact]
+    public void StatusText_IncludesFormatTag_WhenDocumentOpen()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"mvm_{Guid.NewGuid():N}.json");
+        File.WriteAllText(path, """{ "a": 1 }""");
+        try
+        {
+            var vm = Make(out _, out _);
+            vm.OpenPath(path);
+            Assert.Contains("[JSON]", vm.StatusText);
         }
         finally { File.Delete(path); }
     }

@@ -56,7 +56,7 @@ public class ViewSmokeTests
             File.WriteAllText(path, """{ "a": 1, "b": [true, null, "x"], "c": { "d": 2.5 } }""");
             try
             {
-                var vm = new MainViewModel(new JsonDocumentService(), new NoDialogs(), new NoPrompt());
+                var vm = new MainViewModel(new DocumentFactory(), new NoDialogs(), new NoPrompt());
                 vm.OpenPath(path);
 
                 var window = new MainWindow { DataContext = vm };
@@ -66,7 +66,7 @@ public class ViewSmokeTests
                 window.UpdateLayout();
 
                 Assert.NotNull(window.Content);
-                Assert.Single(vm.Roots);
+                Assert.IsType<JsonDocument>(vm.CurrentDocument);
             }
             finally
             {
