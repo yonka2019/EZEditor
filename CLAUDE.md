@@ -177,9 +177,9 @@ shortcuts **Ctrl+S / Ctrl+Shift+S / Ctrl+O / Ctrl+R**. Default window 760×560.
   `Themes/Theme.xaml`.
 
 ## Git
-- Remote: `https://github.com/yonka2019/JSONEditor.git`, branch **`main`**. The GitHub repo was
-  intentionally **not** renamed when the project became EZEditor (local/code/app rename only), so the
-  remote name stays `JSONEditor.git`.
+- Remote: `https://github.com/yonka2019/EZEditor.git`, branch **`main`**. The GitHub repo was
+  renamed from `JSONEditor` to `EZEditor` to match the project; GitHub redirects the old
+  `JSONEditor.git` URL, but `origin` points at the canonical `EZEditor.git`.
 - **NEVER commit or push without the user's explicit request** (their standing rule). Local commit
   identity is set to `yonka2019` / `jonatan@cyray.io`. `.gitignore` excludes `bin/`/`obj/`,
   `publish/`, and `.superpowers/` (SDD scratch).
