@@ -126,4 +126,41 @@ public class CsvDocumentTests
         row[0] = "zzz";
         Assert.Equal(0, fired);
     }
+
+    [Fact]
+    public void ApplyFilter_HidesRowsWithoutMatch_CaseInsensitive()
+    {
+        var doc = Make("name,age\nAlice,30\nBob,25");
+        doc.ApplyFilter("alice");
+        Assert.False(doc.Rows[0].IsFilteredOut); // "Alice" matches (case-insensitive)
+        Assert.True(doc.Rows[1].IsFilteredOut);  // "Bob","25" do not
+    }
+
+    [Fact]
+    public void ApplyFilter_MatchesAnyCell()
+    {
+        var doc = Make("name,age\nAlice,30\nBob,25");
+        doc.ApplyFilter("25");
+        Assert.True(doc.Rows[0].IsFilteredOut);
+        Assert.False(doc.Rows[1].IsFilteredOut); // matches the age cell "25"
+    }
+
+    [Fact]
+    public void ApplyFilter_Empty_ShowsAllRows()
+    {
+        var doc = Make("name,age\nAlice,30\nBob,25");
+        doc.ApplyFilter("Bob");
+        doc.ApplyFilter("");
+        Assert.All(doc.Rows, r => Assert.False(r.IsFilteredOut));
+    }
+
+    [Fact]
+    public void ApplyFilter_DoesNotDirtyDocument()
+    {
+        var doc = Make("name,age\nAlice,30\nBob,25");
+        var fired = 0;
+        doc.Changed += (_, _) => fired++;
+        doc.ApplyFilter("Alice");
+        Assert.Equal(0, fired); // filtering must never mark the document dirty
+    }
 }

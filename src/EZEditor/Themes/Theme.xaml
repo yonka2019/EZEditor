@@ -395,6 +395,7 @@
         <Setter Property="AutoGenerateColumns" Value="False" />
         <Setter Property="SelectionUnit" Value="Cell" />
         <Setter Property="HeadersVisibility" Value="Column" />
+        <Setter Property="MinRowHeight" Value="34" />
     </Style>
 
     <Style TargetType="DataGridColumnHeader">
@@ -402,14 +403,16 @@
         <Setter Property="Foreground" Value="{StaticResource KeyColor}" />
         <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Padding" Value="10,6" />
+        <Setter Property="Padding" Value="16,12" />
         <Setter Property="BorderBrush" Value="{StaticResource Hairline}" />
         <Setter Property="BorderThickness" Value="0,0,1,1" />
     </Style>
 
     <Style TargetType="DataGridCell">
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="Padding" Value="16,12" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
         <Style.Triggers>
             <Trigger Property="IsSelected" Value="True">
@@ -417,6 +420,25 @@
                 <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
             </Trigger>
         </Style.Triggers>
+    </Style>
+
+    <!-- CSV filter: collapse rows the filter box hides (CsvRow.IsFilteredOut). -->
+    <Style TargetType="DataGridRow">
+        <Setter Property="Visibility"
+                Value="{Binding IsFilteredOut, Converter={StaticResource InverseBoolToVis}}" />
+    </Style>
+
+    <!-- Centered CSV cell content. DataGridCell.HorizontalContentAlignment is ignored by the
+         default cell template, so centering is done on the column's element styles instead. -->
+    <Style x:Key="CsvCellText" TargetType="TextBlock">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="TextAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="CsvCellEdit" TargetType="TextBox">
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="TextAlignment" Value="Center" />
     </Style>
 
 </ResourceDictionary>

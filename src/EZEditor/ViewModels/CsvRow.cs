@@ -2,7 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace EZEditor.ViewModels;
 
-public sealed class CsvRow : ObservableObject
+public sealed partial class CsvRow : ObservableObject
 {
     private readonly List<string> _cells;
 
@@ -10,6 +10,10 @@ public sealed class CsvRow : ObservableObject
 
     public IReadOnlyList<string> Cells => _cells;
     public int Count => _cells.Count;
+
+    // Set by CsvDocument.ApplyFilter; the DataGrid row collapses when true. Filtering must
+    // never dirty the document, so CsvDocument ignores this property in its dirty tracking.
+    [ObservableProperty] private bool _isFilteredOut;
 
     // "Item[]" is WPF's indexer-changed sentinel; kept as a literal so this VM stays WPF-free.
     public string this[int index]

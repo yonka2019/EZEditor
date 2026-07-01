@@ -127,6 +127,7 @@
                     BorderBrush="{StaticResource Hairline}" BorderThickness="1">
                 <DataGrid x:Name="CsvGrid" ItemsSource="{Binding Rows}"
                           Loaded="OnCsvGridLoaded"
+                          AutoGenerateColumns="False"
                           Tag="{Binding}"
                           Margin="2" Padding="6">
                     <DataGrid.ContextMenu>

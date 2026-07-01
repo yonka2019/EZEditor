@@ -133,7 +133,9 @@ public partial class MainWindow : Window
                     Mode = BindingMode.TwoWay,
                     UpdateSourceTrigger = UpdateSourceTrigger.LostFocus
                 },
-                Width = new DataGridLength(1, DataGridLengthUnitType.Star)
+                Width = new DataGridLength(1, DataGridLengthUnitType.Star),
+                ElementStyle = grid.TryFindResource("CsvCellText") as Style,
+                EditingElementStyle = grid.TryFindResource("CsvCellEdit") as Style
             });
         }
     }

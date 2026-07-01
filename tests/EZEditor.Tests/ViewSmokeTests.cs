@@ -124,6 +124,27 @@ public class ViewSmokeTests
     }
 
     [Fact]
+    public void MainWindow_CsvGrid_ShowsFileHeaders_AndCenteredColumns()
+    {
+        RunOnSta(() =>
+        {
+            var window = BuildWindow("vsmoke_*.csv", "name,age,city\nAlice,30,Berlin\nBob,25,London", out _);
+            try
+            {
+                var grid = FindVisualChild<DataGrid>(window.Content as DependencyObject ?? window);
+                Assert.NotNull(grid);
+                // Header fix: exactly the file's columns — NOT auto-generated CsvRow properties
+                // (Cells / Count / IsFilteredOut), which is what AutoGenerateColumns=False prevents.
+                Assert.Equal(new[] { "name", "age", "city" },
+                    grid!.Columns.Select(c => c.Header?.ToString()).ToArray());
+                // Centering: each text column carries a centered ElementStyle.
+                Assert.All(grid.Columns, c => Assert.NotNull(((DataGridTextColumn)c).ElementStyle));
+            }
+            finally { window.Close(); }
+        });
+    }
+
+    [Fact]
     public void MainWindow_RealizesTreeView_ForJsonDocument()
     {
         RunOnSta(() =>

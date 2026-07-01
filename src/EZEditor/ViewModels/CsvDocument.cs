@@ -30,6 +30,22 @@ public sealed class CsvDocument : EditableDocument
 
     public override DocumentFormat Format => DocumentFormat.Csv;
 
+    // Hide rows whose cells don't contain the search text (case-insensitive). Empty text
+    // clears the filter. Setting IsFilteredOut must NOT dirty the document — see OnRowChanged.
+    public override void ApplyFilter(string? text)
+    {
+        var hasText = !string.IsNullOrWhiteSpace(text);
+        foreach (var row in Rows)
+            row.IsFilteredOut = hasText && !RowMatches(row, text!);
+    }
+
+    private static bool RowMatches(CsvRow row, string text)
+    {
+        for (var i = 0; i < row.Count; i++)
+            if (row[i].Contains(text, StringComparison.OrdinalIgnoreCase)) return true;
+        return false;
+    }
+
     public override string Serialize()
     {
         var rows = Rows.Select(r => (IReadOnlyList<string>)Enumerable
@@ -70,7 +86,11 @@ public sealed class CsvDocument : EditableDocument
         OnChanged();
     }
 
-    private void OnRowChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => OnChanged();
+    // Only a cell edit ("Item[]") dirties the document; IsFilteredOut (filtering) must not.
+    private void OnRowChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == "Item[]") OnChanged();
+    }
 
     private void OnRowsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
