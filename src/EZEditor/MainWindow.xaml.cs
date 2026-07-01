@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -95,6 +96,58 @@ public partial class MainWindow : Window
                 MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
+
+    // Build DataGrid columns from CsvDocument.Columns; rebind on ColumnsChanged.
+    private void OnCsvGridLoaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is not DataGrid grid || grid.DataContext is not CsvDocument doc) return;
+        BuildCsvColumns(grid, doc);
+        doc.ColumnsChanged -= GridColumnsChanged;            // avoid double-subscribe on re-load
+        doc.ColumnsChanged += GridColumnsChanged;
+        grid.Tag = doc;
+        _csvGridForDoc = grid;
+    }
+
+    private DataGrid? _csvGridForDoc;
+
+    private void GridColumnsChanged(object? sender, EventArgs e)
+    {
+        if (_csvGridForDoc is { } grid && sender is CsvDocument doc)
+            BuildCsvColumns(grid, doc);
+    }
+
+    private static void BuildCsvColumns(DataGrid grid, CsvDocument doc)
+    {
+        grid.Columns.Clear();
+        for (var i = 0; i < doc.Columns.Count; i++)
+        {
+            grid.Columns.Add(new DataGridTextColumn
+            {
+                Header = doc.Columns[i],
+                Binding = new Binding($"[{i}]")
+                {
+                    Mode = BindingMode.TwoWay,
+                    UpdateSourceTrigger = UpdateSourceTrigger.LostFocus
+                },
+                Width = new DataGridLength(1, DataGridLengthUnitType.Star)
+            });
+        }
+    }
+
+    private static CsvDocument? CsvFromMenu(object sender)
+        => (sender as FrameworkElement)?.DataContext as CsvDocument
+           ?? (((sender as MenuItem)?.Parent as ContextMenu)?.Tag as CsvDocument);
+
+    private void OnCsvAddRow(object sender, RoutedEventArgs e) => CsvFromMenu(sender)?.AddRow();
+
+    private void OnCsvDeleteRow(object sender, RoutedEventArgs e)
+    {
+        if (CsvFromMenu(sender) is not { } doc || _csvGridForDoc is not { } grid) return;
+        if (grid.CurrentItem is CsvRow row) doc.DeleteRow(row);
+    }
+
+    private void OnCsvAddColumn(object sender, RoutedEventArgs e)
+        => CsvFromMenu(sender)?.AddColumn($"Column{(CsvFromMenu(sender)!.Columns.Count + 1)}");
 
     // Locate notepad++.exe via the registry App Paths key, then common install dirs.
     private static string? FindNotepadPlusPlus()

@@ -121,6 +121,25 @@
                 </TreeView>
             </Border>
         </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:CsvDocument}">
+            <Border Margin="14" CornerRadius="10" Background="{StaticResource Surface}"
+                    BorderBrush="{StaticResource Hairline}" BorderThickness="1">
+                <DataGrid x:Name="CsvGrid" ItemsSource="{Binding Rows}"
+                          Loaded="OnCsvGridLoaded"
+                          Tag="{Binding}"
+                          Margin="2" Padding="6">
+                    <DataGrid.ContextMenu>
+                        <ContextMenu Tag="{Binding}">
+                            <MenuItem Header="Add row" Click="OnCsvAddRow" />
+                            <MenuItem Header="Delete selected row" Click="OnCsvDeleteRow" />
+                            <Separator/>
+                            <MenuItem Header="Add column" Click="OnCsvAddColumn" />
+                        </ContextMenu>
+                    </DataGrid.ContextMenu>
+                </DataGrid>
+            </Border>
+        </DataTemplate>
     </Window.Resources>
 
     <DockPanel>

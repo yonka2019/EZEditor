@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 using EZEditor;
 using EZEditor.Services;
 using EZEditor.ViewModels;
@@ -39,6 +41,67 @@ public class ViewSmokeTests
         t.Start();
         t.Join();
         if (captured != null) throw captured;
+    }
+
+    private static T? FindVisualChild<T>(DependencyObject root) where T : DependencyObject
+    {
+        var count = VisualTreeHelper.GetChildrenCount(root);
+        for (var i = 0; i < count; i++)
+        {
+            var c = VisualTreeHelper.GetChild(root, i);
+            if (c is T hit) return hit;
+            var deeper = FindVisualChild<T>(c);
+            if (deeper is not null) return deeper;
+        }
+        return null;
+    }
+
+    private static MainWindow BuildWindow(string fileName, string contents, out MainViewModel vm)
+    {
+        var app = Application.Current ?? new Application();
+        if (app.Resources.MergedDictionaries.Count == 0)
+            app.Resources.MergedDictionaries.Add(new ResourceDictionary
+            {
+                Source = new Uri("pack://application:,,,/EZEditor;component/Themes/Theme.xaml")
+            });
+
+        var path = Path.Combine(Path.GetTempPath(), fileName.Replace("*", Guid.NewGuid().ToString("N")));
+        File.WriteAllText(path, contents);
+        vm = new MainViewModel(new DocumentFactory(), new NoDialogs(), new NoPrompt());
+        vm.OpenPath(path);
+        File.Delete(path);
+
+        var window = new MainWindow { DataContext = vm };
+        // A bare Measure/Arrange on a never-shown Window does NOT expand a ContentControl's
+        // DataTemplate (its ContentPresenter is only built once connected to a presentation
+        // source). Show it off-screen so the inner editor (TreeView / DataGrid) actually
+        // realizes — which is the whole point of a view smoke test.
+        window.WindowStartupLocation = WindowStartupLocation.Manual;
+        window.Left = -32000;
+        window.Top = -32000;
+        window.Width = 900;
+        window.Height = 650;
+        window.ShowInTaskbar = false;
+        window.ShowActivated = false;
+        window.Show();
+        window.UpdateLayout();
+        return window;
+    }
+
+    [Fact]
+    public void MainWindow_RealizesDataGrid_ForCsvDocument()
+    {
+        RunOnSta(() =>
+        {
+            var window = BuildWindow("vsmoke_*.csv", "name,age\nAlice,30\nBob,25", out var vm);
+            try
+            {
+                Assert.IsType<CsvDocument>(vm.CurrentDocument);
+                var root = window.Content as DependencyObject ?? window;
+                Assert.NotNull(FindVisualChild<DataGrid>(root));
+            }
+            finally { window.Close(); }
+        });
     }
 
     [Fact]

@@ -1,0 +1,4 @@
+name,age,city,active
+Alice,30,"Berlin, DE",true
+Bob,25,London,false
+Cara,41,"New ""NY"" York",true
