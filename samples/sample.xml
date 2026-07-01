@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<catalog xmlns:meta="urn:demo:meta" updated="2026-06-30">
+  <!-- demo catalog -->
+  <book id="b1" meta:rating="5">
+    <title>Clean Code</title>
+    <author>Robert C. Martin</author>
+    <notes><![CDATA[Has <markup> & symbols]]></notes>
+  </book>
+  <book id="b2">
+    <title>The Pragmatic Programmer</title>
+    <author>Hunt &amp; Thomas</author>
+  </book>
+</catalog>

@@ -20,6 +20,7 @@
     <SolidColorBrush x:Key="TextMuted"    Color="#79839B" />
     <SolidColorBrush x:Key="Accent"       Color="#5B8CFF" />
     <SolidColorBrush x:Key="KeyColor"     Color="#82AAFF" />
+    <SolidColorBrush x:Key="AttrColor"    Color="#E5C07B" />
     <SolidColorBrush x:Key="StringColor"  Color="#A6D177" />
     <SolidColorBrush x:Key="NumberColor"  Color="#F0A35E" />
     <SolidColorBrush x:Key="BoolColor"    Color="#C99BF0" />

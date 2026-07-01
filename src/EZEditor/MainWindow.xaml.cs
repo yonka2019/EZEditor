@@ -156,6 +156,36 @@ public partial class MainWindow : Window
         doc.AddColumn($"Column{doc.Columns.Count + 1}");
     }
 
+    private static XmlNodeViewModel? XmlNodeFrom(object sender)
+        => (sender as FrameworkElement)?.DataContext as XmlNodeViewModel;
+
+    private void OnXmlAddChild(object sender, RoutedEventArgs e)
+    {
+        if (XmlNodeFrom(sender) is { IsElement: true } node)
+            node.AddChildElement("newElement");
+    }
+
+    private void OnXmlDelete(object sender, RoutedEventArgs e)
+    {
+        if (XmlNodeFrom(sender) is { Parent: not null } node) node.Delete();
+    }
+
+    private void OnXmlExpandAll(object sender, RoutedEventArgs e) => XmlRootOf(sender)?.SetExpandedRecursive(true);
+
+    private void OnXmlCollapseAll(object sender, RoutedEventArgs e)
+    {
+        if (XmlRootOf(sender) is not { } root) return;
+        root.SetExpandedRecursive(false);
+        root.IsExpanded = true;
+    }
+
+    private static XmlNodeViewModel? XmlRootOf(object sender)
+    {
+        var n = XmlNodeFrom(sender);
+        while (n?.Parent is not null) n = n.Parent;
+        return n;
+    }
+
     // Locate notepad++.exe via the registry App Paths key, then common install dirs.
     private static string? FindNotepadPlusPlus()
     {

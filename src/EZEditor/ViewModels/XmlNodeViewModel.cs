@@ -31,6 +31,7 @@ public sealed partial class XmlNodeViewModel : ObservableObject
     [ObservableProperty] private string? _name;
     [ObservableProperty] private string? _value;
     [ObservableProperty] private bool _isExpanded = true;
+    [ObservableProperty] private bool _isSelected;
     [ObservableProperty] private bool _isFilteredOut;
 
     public bool IsElement => Kind == XmlNodeKind.Element;

@@ -1,15 +1,15 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
-using EZEditor.Models;
 
 namespace EZEditor.Converters;
 
-// Visible when the bound JsonNodeKind equals the kind named in ConverterParameter.
+// Visible when the bound enum's ToString() equals the string ConverterParameter.
+// Enum-agnostic: works for both JsonNodeKind and XmlNodeKind.
 public class KindToVisibilityConverter : IValueConverter
 {
     public object Convert(object? value, Type t, object? parameter, CultureInfo c)
-        => value is JsonNodeKind k && parameter is string s && k.ToString() == s
+        => value is not null && parameter is string s && value.ToString() == s
             ? Visibility.Visible : Visibility.Collapsed;
     public object ConvertBack(object? value, Type t, object? p, CultureInfo c) => Binding.DoNothing;
 }

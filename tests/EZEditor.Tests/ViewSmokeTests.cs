@@ -138,4 +138,20 @@ public class ViewSmokeTests
             finally { window.Close(); }
         });
     }
+
+    [Fact]
+    public void MainWindow_RealizesTreeView_ForXmlDocument()
+    {
+        RunOnSta(() =>
+        {
+            var window = BuildWindow("vsmoke_*.xml", "<root id=\"1\"><c>v</c></root>", out var vm);
+            try
+            {
+                Assert.IsType<XmlDocument>(vm.CurrentDocument);
+                var root = window.Content as DependencyObject ?? window;
+                Assert.NotNull(FindVisualChild<TreeView>(root));
+            }
+            finally { window.Close(); }
+        });
+    }
 }
