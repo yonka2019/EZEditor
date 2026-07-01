@@ -101,8 +101,11 @@ public partial class MainWindow : Window
     private void OnCsvGridLoaded(object sender, RoutedEventArgs e)
     {
         if (sender is not DataGrid grid || grid.DataContext is not CsvDocument doc) return;
+        // If we were tracking a different document's grid, detach its handler first.
+        if (_csvGridForDoc is { } old && old.DataContext is CsvDocument prev && !ReferenceEquals(prev, doc))
+            prev.ColumnsChanged -= GridColumnsChanged;
         BuildCsvColumns(grid, doc);
-        doc.ColumnsChanged -= GridColumnsChanged;            // avoid double-subscribe on re-load
+        doc.ColumnsChanged -= GridColumnsChanged;   // avoid double-subscribe on reload
         doc.ColumnsChanged += GridColumnsChanged;
         grid.Tag = doc;
         _csvGridForDoc = grid;
@@ -112,7 +115,8 @@ public partial class MainWindow : Window
 
     private void GridColumnsChanged(object? sender, EventArgs e)
     {
-        if (_csvGridForDoc is { } grid && sender is CsvDocument doc)
+        if (_csvGridForDoc is { } grid && sender is CsvDocument doc
+            && grid.DataContext is CsvDocument current && ReferenceEquals(current, doc))
             BuildCsvColumns(grid, doc);
     }
 
@@ -147,7 +151,10 @@ public partial class MainWindow : Window
     }
 
     private void OnCsvAddColumn(object sender, RoutedEventArgs e)
-        => CsvFromMenu(sender)?.AddColumn($"Column{(CsvFromMenu(sender)!.Columns.Count + 1)}");
+    {
+        if (CsvFromMenu(sender) is not { } doc) return;
+        doc.AddColumn($"Column{doc.Columns.Count + 1}");
+    }
 
     // Locate notepad++.exe via the registry App Paths key, then common install dirs.
     private static string? FindNotepadPlusPlus()

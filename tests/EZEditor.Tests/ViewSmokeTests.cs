@@ -56,8 +56,27 @@ public class ViewSmokeTests
         return null;
     }
 
+    private static void ResetApplicationSingleton()
+    {
+        // WPF Application is a per-AppDomain singleton guarded by two static fields.
+        // When the first STA test thread ends, Application.Current is non-null but its
+        // dispatcher thread is dead; we must clear both fields so a new Application() works.
+        const System.Reflection.BindingFlags f =
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static;
+        typeof(Application).GetField("_appInstance", f)?.SetValue(null, null);
+        typeof(Application).GetField("_appCreatedInThisAppDomain", f)?.SetValue(null, false);
+    }
+
     private static MainWindow BuildWindow(string fileName, string contents, out MainViewModel vm)
     {
+        // Each STA test thread needs its own Application so that Window.Show() uses the
+        // current thread's dispatcher. Application.Current is process-wide; once its owning
+        // thread has finished, the Application cannot pump layout for a new thread's window.
+        // Reset both singleton guards so a fresh Application can be created on each thread.
+        var existing = Application.Current;
+        if (existing != null && !existing.Dispatcher.Thread.IsAlive)
+            ResetApplicationSingleton();
+
         var app = Application.Current ?? new Application();
         if (app.Resources.MergedDictionaries.Count == 0)
             app.Resources.MergedDictionaries.Add(new ResourceDictionary
@@ -105,36 +124,18 @@ public class ViewSmokeTests
     }
 
     [Fact]
-    public void MainWindow_BuildsAndLaysOut_WithoutResourceOrTemplateErrors()
+    public void MainWindow_RealizesTreeView_ForJsonDocument()
     {
         RunOnSta(() =>
         {
-            var app = Application.Current ?? new Application();
-            app.Resources.MergedDictionaries.Add(new ResourceDictionary
-            {
-                Source = new Uri("pack://application:,,,/EZEditor;component/Themes/Theme.xaml")
-            });
-
-            var path = Path.Combine(Path.GetTempPath(), $"vsmoke_{Guid.NewGuid():N}.json");
-            File.WriteAllText(path, """{ "a": 1, "b": [true, null, "x"], "c": { "d": 2.5 } }""");
+            var window = BuildWindow("vsmoke_*.json", """{ "a": 1, "b": [true, null, "x"], "c": { "d": 2.5 } }""", out var vm);
             try
             {
-                var vm = new MainViewModel(new DocumentFactory(), new NoDialogs(), new NoPrompt());
-                vm.OpenPath(path);
-
-                var window = new MainWindow { DataContext = vm };
-                // Force template application + layout without showing the window.
-                window.Measure(new Size(800, 600));
-                window.Arrange(new Rect(0, 0, 800, 600));
-                window.UpdateLayout();
-
-                Assert.NotNull(window.Content);
                 Assert.IsType<JsonDocument>(vm.CurrentDocument);
+                var root = window.Content as DependencyObject ?? window;
+                Assert.NotNull(FindVisualChild<TreeView>(root));
             }
-            finally
-            {
-                if (File.Exists(path)) File.Delete(path);
-            }
+            finally { window.Close(); }
         });
     }
 }
