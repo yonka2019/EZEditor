@@ -53,4 +53,17 @@ public class DocumentFactoryTests
         }
         finally { File.Delete(path); }
     }
+
+    [Fact]
+    public void LoadAuto_XmlFile_ReturnsXmlDocument()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"df_{Guid.NewGuid():N}.xml");
+        File.WriteAllText(path, "<root><a>1</a></root>");
+        try
+        {
+            var doc = new DocumentFactory().LoadAuto(path);
+            Assert.IsType<EZEditor.ViewModels.XmlDocument>(doc);
+        }
+        finally { File.Delete(path); }
+    }
 }

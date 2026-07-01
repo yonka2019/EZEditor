@@ -7,6 +7,7 @@ public sealed class DocumentFactory
 {
     private readonly JsonDocumentService _json = new();
     private readonly CsvDocumentService _csv = new();
+    private readonly XmlDocumentService _xml = new();
 
     public EditableDocument LoadAuto(string path)
     {
@@ -18,7 +19,7 @@ public sealed class DocumentFactory
     {
         DocumentFormat.Json => new JsonDocument(_json.Parse(text), _json),
         DocumentFormat.Csv => new CsvDocument(_csv.Parse(text), _csv),
-        DocumentFormat.Xml => throw new NotSupportedException("XML not wired yet"),
+        DocumentFormat.Xml => new XmlDocument(_xml.Parse(text), _xml),
         _ => throw new NotSupportedException($"Unhandled format {fmt}"),
     };
 
