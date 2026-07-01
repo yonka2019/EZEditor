@@ -60,6 +60,21 @@ public class XmlNodeViewModelTests
     }
 
     [Fact]
+    public void AddingAttribute_BubblesChanged()
+    {
+        var el = new System.Xml.Linq.XElement("e");
+        var vm = new XmlNodeViewModel(XmlNodeKind.Element, el, null, name: "e");
+        var fired = 0;
+        vm.Changed += (_, _) => fired++;
+
+        var attr = new System.Xml.Linq.XAttribute("id", "1");
+        el.Add(attr);
+        vm.Attributes.Add(new XmlNodeViewModel(XmlNodeKind.Attribute, attr, vm, name: "id", value: "1"));
+
+        Assert.True(fired >= 1);
+    }
+
+    [Fact]
     public void ApplyFilter_MatchesNameValueAndAttributes()
     {
         var el = new XElement("root", new XElement("city", new XText("Berlin")));

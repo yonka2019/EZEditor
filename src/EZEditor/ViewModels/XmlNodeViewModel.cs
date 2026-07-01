@@ -19,6 +19,7 @@ public sealed partial class XmlNodeViewModel : ObservableObject
         Attributes = new ObservableCollection<XmlNodeViewModel>();
         Children = new ObservableCollection<XmlNodeViewModel>();
         Children.CollectionChanged += OnChildrenChanged;
+        Attributes.CollectionChanged += OnChildrenChanged;
     }
 
     public XObject XObject { get; }
@@ -114,6 +115,7 @@ public sealed partial class XmlNodeViewModel : ObservableObject
             IsFilteredOut = false;
             if (_expandedBeforeFilter is bool prev) { IsExpanded = prev; _expandedBeforeFilter = null; }
             foreach (var c in Children) c.ApplyFilter(null);
+            foreach (var a in Attributes) a.ApplyFilter(null);
             return true;
         }
 
