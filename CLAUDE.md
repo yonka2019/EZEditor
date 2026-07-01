@@ -59,7 +59,7 @@ src/EZEditor/                        WPF app (net9.0-windows7.0, WinExe)
   icon.ico                           app icon ({ } braces + 3 type-colored dots)
   Models/
     JsonNodeKind.cs                  enum: Object, Array, String, Number, Boolean, Null
-    XmlNodeKind.cs                   enum: Element, Attribute, Comment, CData, Text, Document
+    XmlNodeKind.cs                   enum: Element, Attribute, Text, Comment, CData
   ViewModels/
     EditableDocument.cs              abstract base: Format, Changed event, Serialize(), Save() UTF-8-no-BOM, ApplyFilter()
     JsonDocument.cs                  wraps JsonNodeViewModel tree; adapts to EditableDocument
@@ -88,13 +88,15 @@ docs/superpowers/                    specs/ and plans/ (design + implementation 
 ```
 
 ### Key types
-- **`EditableDocument`** (abstract) — `Format` (`DocumentFormat` enum: Json/Csv/Xml), `Changed`
+- **`EditableDocument`** (abstract) — `Format` (`DocumentFormat` enum: Json/Xml/Csv), `Changed`
   event, `Serialize()`, `Save(path)` (UTF-8 no-BOM), `ApplyFilter(text)`. Subclasses:
   `JsonDocument`, `CsvDocument`, `XmlDocument`.
-- **`DocumentFactory`** — `Detect(text, ext)` content sniff: leading `<` ⇒ XML; structural JSON
-  parse succeeds ⇒ JSON; else CSV. **Extension is the tiebreaker** when trimmed content is
-  empty/ambiguous (a malformed `.json`/`.xml` opens in its real format and shows a parse error
-  rather than silently becoming CSV). `LoadAuto(path)` reads the file and calls `Create(format, text)`.
+- **`DocumentFactory`** — `Detect(text, ext)` returns a `DocumentFormat` by content sniff: leading
+  `<` ⇒ XML; structural JSON (starts with `{`/`[`/`"` and parses) ⇒ JSON; else the **extension is
+  the tiebreaker** (`.json`/`.xml` ⇒ that format, else CSV). So a malformed `.json`/`.xml` still
+  classifies as its declared format rather than silently becoming CSV — the parse error then
+  surfaces in `Create` (which calls the format's `Parse`), not in `Detect`. `LoadAuto(path)` reads
+  the file and calls `Create(format, text)`.
 - **`JsonNodeViewModel`** — `Kind`, `Name` (object key; null for array elements/root), `Value`
   (scalar text for String/Number/Boolean; null otherwise), `Children`, `Parent`, `IsExpanded`,
   `IsSelected`, `IsFilteredOut`, `IsObjectMember`, `DisplayName`.
@@ -136,7 +138,8 @@ Open / Save / Save As / **Reload from disk**; **Open Externally** (Notepad++ if 
 registry `App Paths\notepad++.exe` or `Program Files\Notepad++`, else the OS default app);
 **JSON**: type‑aware inline editors (string=green, number=orange/with red‑border validation, boolean=toggle
 switch, null, object/array show child counts); **keys blue**; add/delete/rename/**change‑type** via
-right‑click context menu; **Expand all / Collapse all** (right-click any node OR empty tree space);
+right‑click context menu; **hover a key/field to see its type** (tooltip, not on the value);
+**Expand all / Collapse all** (right-click any node OR empty tree space);
 **CSV**: spreadsheet `DataGrid` (rows × columns), add/delete row & column via right-click, header
 row on by default, delimiter auto-detected and preserved;
 **XML**: faithful element tree — editable element names, attributes inline, comments/CDATA displayed,
