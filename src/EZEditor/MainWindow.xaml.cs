@@ -157,7 +157,8 @@ public partial class MainWindow : Window
     }
 
     private static XmlNodeViewModel? XmlNodeFrom(object sender)
-        => (sender as FrameworkElement)?.DataContext as XmlNodeViewModel;
+        => (sender as FrameworkElement)?.DataContext as XmlNodeViewModel
+           ?? ((sender as MenuItem)?.Parent as ContextMenu)?.Tag as XmlNodeViewModel;
 
     private void OnXmlAddChild(object sender, RoutedEventArgs e)
     {
