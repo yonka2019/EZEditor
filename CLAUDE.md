@@ -1,23 +1,25 @@
 # EZEditor — project guide for Claude
 
-A native **Windows WPF desktop app** (C#, **.NET 9** — `net9.0-windows7.0`) that opens a JSON file and shows it in a
-beautiful, syntax‑highlighted, collapsible **tree** with **type‑aware** inline editors, then saves
-valid JSON back. Author/credit: **yonka** (shown bottom‑right of the window).
+A native **Windows WPF desktop app** (C#, **.NET 9** — `net9.0-windows7.0`) that opens **JSON,
+CSV, and XML** files and edits them in a structured, type-aware UI — never as free-form text —
+then saves valid output back. **Format is auto-detected from file content.** Author/credit:
+**yonka** (shown bottom-right of the window).
 
 ## Build / run / test
 
 - Solution file is **`EZEditor.slnx`** (the new XML solution format — NOT `.sln`). Use that name:
   - Build: `dotnet build EZEditor.slnx`
-  - Test:  `dotnet test EZEditor.slnx`  (xUnit; **105 tests** — logic, converters, and a WPF view
-    smoke test that builds the real `MainWindow` on an STA thread). The **test project has
-    `UseWPF=true`** (so it can use `Visibility`/construct the window) — that drops the implicit
-    `System.IO` using, which is re-added via `<Using Include="System.IO" />` in the test csproj.
+  - Test:  `dotnet test EZEditor.slnx`  (xUnit; **163 tests** — logic, converters, EditableDocument/
+    JsonDocument/CsvDocument/XmlDocument/DocumentFactory/service tests, and WPF view smoke tests
+    that build the real `MainWindow` on an STA thread). The **test project has `UseWPF=true`**
+    (so it can use `Visibility`/construct the window) — that drops the implicit `System.IO` using,
+    which is re-added via `<Using Include="System.IO" />` in the test csproj.
 - Publish single-file x64 exes (output gitignored under `publish/`):
   - Self-contained (no runtime needed, ~126 MB): `dotnet publish src/EZEditor/EZEditor.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish/self-contained-x64`
   - Framework-dependent (needs .NET 9 Desktop Runtime, ~0.4 MB): same with `--self-contained false`
 - App exe: `src/EZEditor/bin/Debug/net9.0-windows7.0/EZEditor.exe`
-- Open a file from the command line (also powers Windows "Open with"): `EZEditor.exe "C:\path\file.json"`
-- Sample file: `samples/sample.json`
+- Open a file from the command line (also powers Windows "Open with"): `EZEditor.exe "C:\path\file.csv"`
+- Sample files: `samples/sample.json`, `samples/sample.csv`, `samples/sample.xml`
 
 ### ⚠️ The app runs ELEVATED (admin) — important build/run gotchas
 `src/EZEditor/app.manifest` requests `requireAdministrator`, so the app **always launches as
@@ -35,7 +37,10 @@ administrator**. Consequences when working on it:
 
 ## Architecture (MVVM, logic is UI‑independent and unit‑tested)
 
-JSON is loaded into a tree of `JsonNodeViewModel`; the UI binds to it and serializes it back.
+A format-agnostic shell (`MainViewModel`) holds one `EditableDocument`; `DocumentFactory` sniffs
+content and builds a `JsonDocument`, `CsvDocument`, or `XmlDocument`. `MainWindow` swaps the
+editor surface via a `ContentControl` with one `DataTemplate` per document type (JSON tree
+unchanged, XML faithful element tree, CSV editable `DataGrid`).
 No third‑party UI library — **pure native WPF** (WPF‑UI was tried and removed; the user dislikes it).
 Only NuGet dependency: **CommunityToolkit.Mvvm** (`[ObservableProperty]` / `[RelayCommand]`).
 
@@ -48,24 +53,48 @@ src/EZEditor/                        WPF app (net9.0-windows7.0, WinExe)
                                      for unsaved changes; OnOpenExternally (+ FindNotepadPlusPlus);
                                      Shift+wheel = horizontal scroll (OnTreePreviewMouseWheel +
                                      FindScrollViewer). Window icon uses an assembly-qualified pack URI.
+                                     ContentControl bound to CurrentDocument swaps JSON TreeView /
+                                     XML TreeView / CSV DataGrid by DataTemplate.
   app.manifest                       requireAdministrator (always elevated)
   icon.ico                           app icon ({ } braces + 3 type-colored dots)
-  Models/JsonNodeKind.cs             enum: Object, Array, String, Number, Boolean, Null
+  Models/
+    JsonNodeKind.cs                  enum: Object, Array, String, Number, Boolean, Null
+    XmlNodeKind.cs                   enum: Element, Attribute, Comment, CData, Text, Document
   ViewModels/
+    EditableDocument.cs              abstract base: Format, Changed event, Serialize(), Save() UTF-8-no-BOM, ApplyFilter()
+    JsonDocument.cs                  wraps JsonNodeViewModel tree; adapts to EditableDocument
+    CsvDocument.cs                   wraps CsvRow collection; adapts to EditableDocument
+    CsvRow.cs                        observable row of cell strings; add/remove cells
+    XmlDocument.cs                   wraps XmlNodeViewModel tree over XDocument; adapts to EditableDocument
+    XmlNodeViewModel.cs              tree node: Kind, Name, Value, Attributes, Children, Parent; XObject ref
     JsonNodeViewModel.cs             tree node (see below)
     MainViewModel.cs                 commands + document state (see below)
   Services/
+    DocumentFactory.cs               Detect (content sniff) + LoadAuto + Create per format
     JsonDocumentService.cs           Parse / Serialize / Load / Save / IsValidNumber
-    IFileDialogService.cs + FileDialogService.cs   open/save dialogs (abstracted for tests)
+    CsvDocumentService.cs            RFC-4180 parse/serialize; delimiter detection + preservation
+    CsvParseResult.cs                parse result: headers, rows, detected delimiter
+    XmlDocumentService.cs            XDocument-based parse/serialize; preserves declaration/whitespace
+    XmlParseResult.cs                parse result: XDocument + format metadata
+    IFileDialogService.cs + FileDialogService.cs   open/save dialogs (abstracted for tests);
+                                                   multi-format filters (JSON/CSV/XML/All)
     IUserPrompt.cs + MessageBoxPrompt.cs           Error / ConfirmDiscard (PromptResult enum)
   Converters/Converters.cs           KindToVisibility, StringBool, BoolToVisibility, InverseBoolToVisibility
   Validation/NumberValidationRule.cs number-field input validation (uses IsValidNumber)
-  Themes/Theme.xaml                  palette, fonts, all control styles + TreeViewItem template
+  Themes/Theme.xaml                  palette, fonts, all control styles + TreeViewItem template +
+                                     dark DataGrid styles for CSV
 tests/EZEditor.Tests/                xUnit (net9.0-windows7.0), references the app project
 docs/superpowers/                    specs/ and plans/ (design + implementation plan)
 ```
 
 ### Key types
+- **`EditableDocument`** (abstract) — `Format` (`DocumentFormat` enum: Json/Csv/Xml), `Changed`
+  event, `Serialize()`, `Save(path)` (UTF-8 no-BOM), `ApplyFilter(text)`. Subclasses:
+  `JsonDocument`, `CsvDocument`, `XmlDocument`.
+- **`DocumentFactory`** — `Detect(text, ext)` content sniff: leading `<` ⇒ XML; structural JSON
+  parse succeeds ⇒ JSON; else CSV. **Extension is the tiebreaker** when trimmed content is
+  empty/ambiguous (a malformed `.json`/`.xml` opens in its real format and shows a parse error
+  rather than silently becoming CSV). `LoadAuto(path)` reads the file and calls `Create(format, text)`.
 - **`JsonNodeViewModel`** — `Kind`, `Name` (object key; null for array elements/root), `Value`
   (scalar text for String/Number/Boolean; null otherwise), `Children`, `Parent`, `IsExpanded`,
   `IsSelected`, `IsFilteredOut`, `IsObjectMember`, `DisplayName`.
@@ -76,27 +105,46 @@ docs/superpowers/                    specs/ and plans/ (design + implementation 
     Filtering must never mark the document dirty.
   - `AddChild(kind)` (unique `newKey`/`newKey2`… for objects), `Delete()`, `Rename(name)`,
     `ChangeKind(kind)` (coerces value; number coercion uses `JsonDocumentService.IsValidNumber`).
-- **`MainViewModel`** — `Roots` (single root, wrapped for the TreeView), `CurrentPath`, `IsDirty`,
-  `FilterText`, `StatusText`; commands `Open`, `Save`, `SaveAs`, `Reload`, `AddChild`, `DeleteNode`,
+- **`XmlNodeViewModel`** — `Kind` (`XmlNodeKind`), `Name`, `Value`, `Attributes`
+  (child `XmlNodeViewModel`s for attributes), `Children`, `Parent`, `XObject` (live reference to
+  the underlying `XObject` in the `XDocument`). Element names shown in blue; attributes rendered
+  inline in `AttrColor` (#E5C07B); comments muted italic.
+- **`CsvRow`** / **`CsvDocument`** — `CsvRow` is an observable list of cell strings; `CsvDocument`
+  exposes `Headers`, `Rows`, add/delete row & column operations. Right-click context menu on the
+  `DataGrid` for row/column ops.
+- **`MainViewModel`** — `CurrentDocument` (`EditableDocument?`), `CurrentPath`, `IsDirty`,
+  `FilterText`, `StatusText` (includes `[JSON]`/`[CSV]`/`[XML]` format tag);
+  `JsonRoot` (JSON-only commands, null when document isn't JSON);
+  commands `Open`, `Save`, `SaveAs`, `Reload`, `AddChild`, `DeleteNode`,
   `MakeString/MakeNumber/MakeBoolean/MakeNull/MakeObject/MakeArray`, `ExpandAll`, `CollapseAll`
-  (CollapseAll keeps the root open); `OpenPath(path)`, `ConfirmDiscardIfDirty()`. File-op catches cover `IOException`, `JsonException`,
+  (CollapseAll keeps the root open); `OpenPath(path)`, `ConfirmDiscardIfDirty()`.
+  File-op catches cover `IOException`, `JsonException`, `XmlException`,
   `UnauthorizedAccessException` (read‑only/ACL) — and Save also `InvalidOperationException`.
 - **`JsonDocumentService`** — parse via `JsonDocument`/`JsonElement`; serialize via `Utf8JsonWriter`
   (Indented, **2‑space**, preserves **object key order** and **exact number text** via
   `GetRawText()`/`WriteRawValue`). `IsValidNumber` is a **syntactic JSON‑number check using
   `Utf8JsonReader`** (NOT `double` — so `1e500` and high‑precision numbers round‑trip instead of
   becoming `0`). Invalid number text serializes as `0` (crash‑safety backstop).
+- **`CsvDocumentService`** — RFC-4180 parse/serialize; auto-detects delimiter (`,` / `;` / tab)
+  and preserves it on round-trip; header row enabled by default.
+- **`XmlDocumentService`** — parse/serialize via `System.Xml.Linq.XDocument` with
+  `LoadOptions.PreserveWhitespace`; faithful round-trip (declaration, attributes, namespaces,
+  comments, CDATA, element order preserved).
 
 ## Features (all implemented)
 Open / Save / Save As / **Reload from disk**; **Open Externally** (Notepad++ if installed — found via
 registry `App Paths\notepad++.exe` or `Program Files\Notepad++`, else the OS default app);
-type‑aware inline editors (string=green, number=orange/with red‑border validation, boolean=toggle
+**JSON**: type‑aware inline editors (string=green, number=orange/with red‑border validation, boolean=toggle
 switch, null, object/array show child counts); **keys blue**; add/delete/rename/**change‑type** via
-right‑click context menu; **Filter** box (keys + values); dirty `●` in status bar; unsaved‑changes
-prompt on Open/Reload/Close; **hover a key/field to see its type** (tooltip, not on the value);
-**Expand all / Collapse all** (right-click any node OR empty tree space); **Shift+mouse-wheel scrolls
-horizontally**; **custom slim dark scrollbar** (fixed-size thumb); shortcuts
-**Ctrl+S / Ctrl+Shift+S / Ctrl+O / Ctrl+R**. Default window 760×560.
+right‑click context menu; **Expand all / Collapse all** (right-click any node OR empty tree space);
+**CSV**: spreadsheet `DataGrid` (rows × columns), add/delete row & column via right-click, header
+row on by default, delimiter auto-detected and preserved;
+**XML**: faithful element tree — editable element names, attributes inline, comments/CDATA displayed,
+declaration/namespaces/element order preserved;
+**Filter** box (keys + values, all formats); format tag `[JSON]`/`[CSV]`/`[XML]` in status bar;
+dirty `●` in status bar; unsaved‑changes prompt on Open/Reload/Close;
+**Shift+mouse-wheel scrolls horizontally**; **custom slim dark scrollbar** (fixed-size thumb);
+shortcuts **Ctrl+S / Ctrl+Shift+S / Ctrl+O / Ctrl+R**. Default window 760×560.
 
 ## Scrolling & custom scrollbar (hard-won notes — don't relearn)
 - TreeView uses **recycling virtualization** (`VirtualizingPanel.IsVirtualizing=True`,
@@ -118,8 +166,8 @@ horizontally**; **custom slim dark scrollbar** (fixed-size thumb); shortcuts
 
 ## Conventions
 - Clean MVVM. All file/dialog/prompt access goes through interfaces so view‑models are testable
-  with fakes. Keep parse/serialize/edit/filter logic in `JsonDocumentService` / `JsonNodeViewModel`
-  (no WPF types) so it stays unit‑testable.
+  with fakes. Keep parse/serialize/edit/filter logic in services / node VMs (no WPF types) so it
+  stays unit‑testable. `System.Xml.Linq` and `System.Text.Json` are the only XML/JSON libraries used.
 - JSON output: 2‑space indent, preserve key order and number text.
 - Fonts: `MonoFont` = "Cascadia Code, Consolas" (tree data), `UiFont` = Segoe UI (chrome). Tree
   editor text is 13; the toolbar "EZEditor" wordmark is 20. Palette + all styles live in
@@ -137,4 +185,9 @@ horizontally**; **custom slim dark scrollbar** (fixed-size thumb); shortcuts
 - On load, containers deeper than 2 levels start collapsed (`AutoExpandDepth=2` in `JsonDocumentService.Build`) — shows the first two key levels, helps large files.
 - `samples/` also has `big-sample.json` (300 objects) and `huge-sample.json` (900 objects) as scroll-test fixtures.
 - Duplicate‑key rename produces valid‑but‑pathological JSON (one member lost on reload); no guard yet.
+- **Cross-format Save As conversion not implemented** — saving a JSON document as `.csv` is not supported; Save As stays within the current format.
+- **XML add-element** produces no surrounding indent whitespace (the new node is appended without adjusting adjacent text nodes).
+- **CSV assumes a single delimiter per file** — mixed delimiters within one file are not handled.
+- **Bare-CR (old-Mac) line endings** in CSV files are not handled.
+- View smoke tests show the window off-screen to realize `ContentControl` templates without a real display.
 - Not built: JSON Schema validation, undo/redo, multi‑tab/multi‑file, raw‑text split view.
