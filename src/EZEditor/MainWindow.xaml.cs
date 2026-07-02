@@ -109,6 +109,16 @@ public partial class MainWindow : Window
         doc.ColumnsChanged += GridColumnsChanged;
         grid.Tag = doc;
         _csvGridForDoc = grid;
+        if (DataContext is MainViewModel mvm) mvm.CommitPendingEdits = CommitCsvEditIfAny;
+    }
+
+    // Close any open DataGrid edit transaction before the document is swapped (Open/Reload),
+    // otherwise changing ItemsSource mid-edit throws in DataGrid.ClearSortDescriptions.
+    private void CommitCsvEditIfAny()
+    {
+        if (_csvGridForDoc is not { IsLoaded: true } grid) return;
+        try { grid.CommitEdit(DataGridEditingUnit.Row, exitEditingMode: true); }
+        catch { try { grid.CancelEdit(DataGridEditingUnit.Row); } catch { /* ignore */ } }
     }
 
     private DataGrid? _csvGridForDoc;
@@ -156,6 +166,16 @@ public partial class MainWindow : Window
     {
         if (CsvFromMenu(sender) is not { } doc) return;
         doc.AddColumn($"Column{doc.Columns.Count + 1}");
+    }
+
+    // Enter should commit the cell edit in place, NOT move down to the next row.
+    private void OnCsvGridPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter && sender is DataGrid grid)
+        {
+            grid.CommitEdit(DataGridEditingUnit.Cell, exitEditingMode: true);
+            e.Handled = true;
+        }
     }
 
     private static XmlNodeViewModel? XmlNodeFrom(object sender)

@@ -31,7 +31,7 @@ public partial class MainViewModel : ObservableObject
 
     public string StatusText =>
         (CurrentPath ?? "No file")
-        + (CurrentDocument is not null ? $"  [{CurrentDocument.Format.ToString().ToUpperInvariant()}]" : string.Empty)
+        + (CurrentDocument is not null ? $"  |{CurrentDocument.Format.ToString().ToUpperInvariant()}|" : string.Empty)
         + (IsDirty ? "  ●" : string.Empty);
 
     partial void OnCurrentDocumentChanged(EditableDocument? oldValue, EditableDocument? newValue)
@@ -48,8 +48,14 @@ public partial class MainViewModel : ObservableObject
 
     private void OnDocChanged(object? sender, EventArgs e) => IsDirty = true;
 
+    // The view sets this to commit/cancel any in-progress editor edit (e.g. a CSV DataGrid cell
+    // in edit mode) BEFORE the document is swapped. Swapping a DataGrid's ItemsSource while a
+    // cell/row edit transaction is open throws ("'Sorting' is not allowed during ... EditItem").
+    public Action? CommitPendingEdits { get; set; }
+
     public void OpenPath(string path)
     {
+        CommitPendingEdits?.Invoke();
         var doc = _factory.LoadAuto(path);
         CurrentDocument = doc;
         CurrentPath = path;

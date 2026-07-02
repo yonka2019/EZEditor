@@ -11,7 +11,7 @@ valid output back. Format is **auto-detected from file content**.
 | Format | Editor | Fidelity |
 |--------|--------|----------|
 | **JSON** | Collapsible tree with type-aware inline editors (string/number/bool/null/object/array) | Preserves key order + exact number text, 2-space indent |
-| **CSV**  | Spreadsheet grid (rows × columns), add/delete row & column, header row | RFC-4180 quoting; delimiter (`,` `;` tab) detected & preserved |
+| **CSV**  | Spreadsheet grid (rows × columns), add/delete row & column, header row; Enter commits the cell edit in place | RFC-4180 quoting; delimiter (`,` `;` tab) detected & preserved |
 | **XML**  | Faithful element tree: editable element names, inline attributes, comments, CDATA | Preserves declaration, attributes, namespaces, comments, element order |
 
 ## Features
@@ -19,7 +19,7 @@ valid output back. Format is **auto-detected from file content**.
 - Auto-detect format by content (extension is a tiebreaker only)
 - Open / Save / Save As / Reload from disk; "Open Externally" (Notepad++ if installed, else default app)
 - Filter box (matches keys/values), dirty `●` indicator, unsaved-changes prompt
-- Format tag `[JSON]` / `[CSV]` / `[XML]` in the status bar
+- Format tag `|JSON|` / `|CSV|` / `|XML|` in the status bar
 - Dark native theme, custom slim scrollbar, Shift+wheel horizontal scroll
 - Shortcuts: Ctrl+S / Ctrl+Shift+S / Ctrl+O / Ctrl+R
 - Runs elevated (administrator)
@@ -50,4 +50,4 @@ with one `DataTemplate` per document type. Parse/serialize/edit logic is WPF-fre
 
 ## License / credit
 
-Author: **yonka** (jonatan@cyray.io). Repository: https://github.com/yonka2019/JSONEditor
+Author: **yonka** (jonatan@cyray.io). Repository: https://github.com/yonka2019/EZEditor

@@ -145,6 +145,49 @@ public class ViewSmokeTests
     }
 
     [Fact]
+    public void CsvReload_WhileCellInEditMode_DoesNotCrash()
+    {
+        RunOnSta(() =>
+        {
+            var existing = Application.Current;
+            if (existing != null && !existing.Dispatcher.Thread.IsAlive) ResetApplicationSingleton();
+            var app = Application.Current ?? new Application();
+            if (app.Resources.MergedDictionaries.Count == 0)
+                app.Resources.MergedDictionaries.Add(new ResourceDictionary
+                { Source = new Uri("pack://application:,,,/EZEditor;component/Themes/Theme.xaml") });
+
+            var path = Path.Combine(Path.GetTempPath(), $"reload_{Guid.NewGuid():N}.csv");
+            File.WriteAllText(path, "a,b\n1,2\n3,4");
+            MainWindow? window = null;
+            try
+            {
+                var vm = new MainViewModel(new DocumentFactory(), new NoDialogs(), new NoPrompt());
+                vm.OpenPath(path);
+
+                window = new MainWindow { DataContext = vm };
+                window.WindowStartupLocation = WindowStartupLocation.Manual;
+                window.Left = -32000; window.Top = -32000;
+                window.ShowInTaskbar = false; window.ShowActivated = false;
+                window.Show();
+                window.UpdateLayout();
+
+                var grid = FindVisualChild<DataGrid>(window.Content as DependencyObject ?? window);
+                Assert.NotNull(grid);
+                var doc = (CsvDocument)vm.CurrentDocument!;
+                grid!.CurrentCell = new DataGridCellInfo(doc.Rows[0], grid.Columns[0]);
+                Assert.True(grid.BeginEdit()); // open a cell edit transaction
+
+                // Reloading while a cell is in edit mode previously crashed
+                // (DataGrid.ClearSortDescriptionsOnItemsSourceChange during an EditItem transaction).
+                vm.ReloadCommand.Execute(null);
+
+                Assert.IsType<CsvDocument>(vm.CurrentDocument);
+            }
+            finally { window?.Close(); if (File.Exists(path)) File.Delete(path); }
+        });
+    }
+
+    [Fact]
     public void MainWindow_RealizesTreeView_ForJsonDocument()
     {
         RunOnSta(() =>

@@ -9,7 +9,7 @@ then saves valid output back. **Format is auto-detected from file content.** Aut
 
 - Solution file is **`EZEditor.slnx`** (the new XML solution format — NOT `.sln`). Use that name:
   - Build: `dotnet build EZEditor.slnx`
-  - Test:  `dotnet test EZEditor.slnx`  (xUnit; **163 tests** — logic, converters, EditableDocument/
+  - Test:  `dotnet test EZEditor.slnx`  (xUnit; **169 tests** — logic, converters, EditableDocument/
     JsonDocument/CsvDocument/XmlDocument/DocumentFactory/service tests, and WPF view smoke tests
     that build the real `MainWindow` on an STA thread). The **test project has `UseWPF=true`**
     (so it can use `Visibility`/construct the window) — that drops the implicit `System.IO` using,
@@ -115,7 +115,10 @@ docs/superpowers/                    specs/ and plans/ (design + implementation 
   exposes `Headers`, `Rows`, add/delete row & column operations. Right-click context menu on the
   `DataGrid` for row/column ops.
 - **`MainViewModel`** — `CurrentDocument` (`EditableDocument?`), `CurrentPath`, `IsDirty`,
-  `FilterText`, `StatusText` (includes `[JSON]`/`[CSV]`/`[XML]` format tag);
+  `FilterText`, `StatusText` (includes `|JSON|`/`|CSV|`/`|XML|` format tag);
+  `CommitPendingEdits` (`Action?` set by the view; invoked at the top of `OpenPath` to commit/
+  cancel any open CSV DataGrid edit transaction BEFORE the document is swapped — swapping
+  `ItemsSource` mid-edit throws in `DataGrid.ClearSortDescriptions`);
   `JsonRoot` (JSON-only commands, null when document isn't JSON);
   commands `Open`, `Save`, `SaveAs`, `Reload`, `AddChild`, `DeleteNode`,
   `MakeString/MakeNumber/MakeBoolean/MakeNull/MakeObject/MakeArray`, `ExpandAll`, `CollapseAll`
@@ -141,10 +144,11 @@ switch, null, object/array show child counts); **keys blue**; add/delete/rename/
 right‑click context menu; **hover a key/field to see its type** (tooltip, not on the value);
 **Expand all / Collapse all** (right-click any node OR empty tree space);
 **CSV**: spreadsheet `DataGrid` (rows × columns), add/delete row & column via right-click, header
-row on by default, delimiter auto-detected and preserved;
+row on by default, delimiter auto-detected and preserved, **Enter commits the cell edit in place**
+(no move to next row — `OnCsvGridPreviewKeyDown`), column headers centered;
 **XML**: faithful element tree — editable element names, attributes inline, comments/CDATA displayed,
 declaration/namespaces/element order preserved;
-**Filter** box (keys + values, all formats); format tag `[JSON]`/`[CSV]`/`[XML]` in status bar;
+**Filter** box (keys + values, all formats); format tag `|JSON|`/`|CSV|`/`|XML|` in status bar;
 dirty `●` in status bar; unsaved‑changes prompt on Open/Reload/Close;
 **Shift+mouse-wheel scrolls horizontally**; **custom slim dark scrollbar** (fixed-size thumb);
 shortcuts **Ctrl+S / Ctrl+Shift+S / Ctrl+O / Ctrl+R**. Default window 760×560.
@@ -186,7 +190,7 @@ shortcuts **Ctrl+S / Ctrl+Shift+S / Ctrl+O / Ctrl+R**. Default window 760×560.
 
 ## Deferred / known limitations
 - On load, containers deeper than 2 levels start collapsed (`AutoExpandDepth=2` in `JsonDocumentService.Build`) — shows the first two key levels, helps large files.
-- `samples/` also has `big-sample.json` (300 objects) and `huge-sample.json` (900 objects) as scroll-test fixtures.
+- `samples/` also has `big-sample.json` (300 objects) and `huge-sample.json` (900 objects) as scroll-test fixtures, plus `big-sample.csv` (2,000 rows) and `huge-sample.csv` (50,000 rows) as CSV grid stress fixtures.
 - Duplicate‑key rename produces valid‑but‑pathological JSON (one member lost on reload); no guard yet.
 - **Cross-format Save As conversion not implemented** — saving a JSON document as `.csv` is not supported; Save As stays within the current format.
 - **XML add-element** produces no surrounding indent whitespace (the new node is appended without adjusting adjacent text nodes).
