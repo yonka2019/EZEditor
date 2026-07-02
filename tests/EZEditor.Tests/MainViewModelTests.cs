@@ -174,7 +174,7 @@ public class MainViewModelTests
         {
             var vm = Make(out _, out _);
             vm.OpenPath(path);
-            Assert.Contains("|JSON|", vm.StatusText);
+            Assert.Contains("[JSON]", vm.StatusText);
         }
         finally { File.Delete(path); }
     }

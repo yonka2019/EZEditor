@@ -31,7 +31,7 @@ public partial class MainViewModel : ObservableObject
 
     public string StatusText =>
         (CurrentPath ?? "No file")
-        + (CurrentDocument is not null ? $"  |{CurrentDocument.Format.ToString().ToUpperInvariant()}|" : string.Empty)
+        + (CurrentDocument is not null ? $"  [{CurrentDocument.Format.ToString().ToUpperInvariant()}]" : string.Empty)
         + (IsDirty ? "  ●" : string.Empty);
 
     partial void OnCurrentDocumentChanged(EditableDocument? oldValue, EditableDocument? newValue)

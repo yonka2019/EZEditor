@@ -115,7 +115,7 @@ docs/superpowers/                    specs/ and plans/ (design + implementation 
   exposes `Headers`, `Rows`, add/delete row & column operations. Right-click context menu on the
   `DataGrid` for row/column ops.
 - **`MainViewModel`** — `CurrentDocument` (`EditableDocument?`), `CurrentPath`, `IsDirty`,
-  `FilterText`, `StatusText` (includes `|JSON|`/`|CSV|`/`|XML|` format tag);
+  `FilterText`, `StatusText` (includes `[JSON]`/`[CSV]`/`[XML]` format tag);
   `CommitPendingEdits` (`Action?` set by the view; invoked at the top of `OpenPath` to commit/
   cancel any open CSV DataGrid edit transaction BEFORE the document is swapped — swapping
   `ItemsSource` mid-edit throws in `DataGrid.ClearSortDescriptions`);
@@ -148,7 +148,7 @@ row on by default, delimiter auto-detected and preserved, **Enter commits the ce
 (no move to next row — `OnCsvGridPreviewKeyDown`), column headers centered;
 **XML**: faithful element tree — editable element names, attributes inline, comments/CDATA displayed,
 declaration/namespaces/element order preserved;
-**Filter** box (keys + values, all formats); format tag `|JSON|`/`|CSV|`/`|XML|` in status bar;
+**Filter** box (keys + values, all formats); format tag `[JSON]`/`[CSV]`/`[XML]` in status bar;
 dirty `●` in status bar; unsaved‑changes prompt on Open/Reload/Close;
 **Shift+mouse-wheel scrolls horizontally**; **custom slim dark scrollbar** (fixed-size thumb);
 shortcuts **Ctrl+S / Ctrl+Shift+S / Ctrl+O / Ctrl+R**. Default window 760×560.
