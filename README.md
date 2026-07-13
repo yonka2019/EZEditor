@@ -18,6 +18,8 @@ valid output back. Format is **auto-detected from file content**.
 
 - Auto-detect format by content (extension is a tiebreaker only)
 - Open / Save / Save As / Reload from disk; "Open Externally" (Notepad++ if installed, else default app)
+- Control characters display as escape sequences (`\n`, `\t`, `\r`, `\\`, `\uXXXX`) — values
+  stay on one line; typing `\n` in an editor commits a real newline (JSON-style, exact round-trip)
 - Filter box (matches keys/values), dirty `●` indicator, unsaved-changes prompt
 - Format tag `[JSON]` / `[CSV]` / `[XML]` in the status bar
 - Dark native theme, custom slim scrollbar, Shift+wheel horizontal scroll

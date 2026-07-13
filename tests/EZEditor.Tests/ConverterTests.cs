@@ -57,4 +57,27 @@ public class ConverterTests
         var result = new InverseBoolToVisibilityConverter().Convert(value, typeof(Visibility), null, C);
         Assert.Equal(visible ? Visibility.Visible : Visibility.Collapsed, result);
     }
+
+    [Fact]
+    public void EscapedText_Convert_EscapesForDisplay()
+    {
+        var result = new EscapedTextConverter().Convert("a\nb\\c", typeof(string), null, C);
+        Assert.Equal(@"a\nb\\c", result);
+    }
+
+    [Fact]
+    public void EscapedText_ConvertBack_UnescapesUserInput()
+    {
+        var result = new EscapedTextConverter().ConvertBack(@"a\nb\\c", typeof(string), null, C);
+        Assert.Equal("a\nb\\c", result);
+    }
+
+    [Fact]
+    public void EscapedText_NonString_PassesThrough()
+    {
+        var conv = new EscapedTextConverter();
+        Assert.Null(conv.Convert(null, typeof(string), null, C));
+        Assert.Null(conv.ConvertBack(null, typeof(string), null, C));
+        Assert.Equal(5, conv.Convert(5, typeof(string), null, C));
+    }
 }

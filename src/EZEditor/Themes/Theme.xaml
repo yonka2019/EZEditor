@@ -8,6 +8,7 @@
     <conv:StringBoolConverter x:Key="StrBool" />
     <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
     <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis" />
+    <conv:EscapedTextConverter x:Key="EscText" />
 
     <!-- ============================== Palette =============================== -->
     <SolidColorBrush x:Key="WindowBg"     Color="#0F1116" />

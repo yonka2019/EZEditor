@@ -9,7 +9,7 @@ then saves valid output back. **Format is auto-detected from file content.** Aut
 
 - Solution file is **`EZEditor.slnx`** (the new XML solution format — NOT `.sln`). Use that name:
   - Build: `dotnet build EZEditor.slnx`
-  - Test:  `dotnet test EZEditor.slnx`  (xUnit; **169 tests** — logic, converters, EditableDocument/
+  - Test:  `dotnet test EZEditor.slnx`  (xUnit; **203 tests** — logic, converters, EditableDocument/
     JsonDocument/CsvDocument/XmlDocument/DocumentFactory/service tests, and WPF view smoke tests
     that build the real `MainWindow` on an STA thread). The **test project has `UseWPF=true`**
     (so it can use `Visibility`/construct the window) — that drops the implicit `System.IO` using,
@@ -79,7 +79,9 @@ src/EZEditor/                        WPF app (net9.0-windows7.0, WinExe)
     IFileDialogService.cs + FileDialogService.cs   open/save dialogs (abstracted for tests);
                                                    multi-format filters (JSON/CSV/XML/All)
     IUserPrompt.cs + MessageBoxPrompt.cs           Error / ConfirmDiscard (PromptResult enum)
-  Converters/Converters.cs           KindToVisibility, StringBool, BoolToVisibility, InverseBoolToVisibility
+    TextEscaper.cs                   display-layer Escape/Unescape of control chars (see below)
+  Converters/Converters.cs           KindToVisibility, StringBool, BoolToVisibility, InverseBoolToVisibility,
+                                     EscapedTextConverter (two-way TextEscaper bridge, key `EscText`)
   Validation/NumberValidationRule.cs number-field input validation (uses IsValidNumber)
   Themes/Theme.xaml                  palette, fonts, all control styles + TreeViewItem template +
                                      dark DataGrid styles for CSV
@@ -148,6 +150,16 @@ row on by default, delimiter auto-detected and preserved, **Enter commits the ce
 (no move to next row — `OnCsvGridPreviewKeyDown`), column headers centered;
 **XML**: faithful element tree — editable element names, attributes inline, comments/CDATA displayed,
 declaration/namespaces/element order preserved;
+**Escaped control chars in all editors** — display shows `\n`/`\r`/`\t`/`\b`/`\f`/`\\`/`\uXXXX`
+instead of rendering the real character (JSON-style: real newline ⇒ `\n`, literal backslash ⇒ `\\`;
+exact round-trip). Two-way: typing `\n` commits a real newline. Implemented as
+`Services/TextEscaper.cs` (Escape/Unescape, lenient on invalid sequences — never throws in a
+binding) + `EscapedTextConverter` (`EscText` in Theme.xaml). Wired on: JSON key + string value
+editors, XML attribute/Text/CData editors + comment TextBlock (composes with its StringFormat),
+CSV cell bindings (static converter instance in `BuildCsvColumns`) + column headers
+(display-only `TextEscaper.Escape` — safe, no header-rename UI). NOT on XML element/attribute
+names (control chars invalid in XML names) or number/boolean editors. Data layer untouched —
+saved files keep real characters;
 **Filter** box (keys + values, all formats); format tag `[JSON]`/`[CSV]`/`[XML]` in status bar;
 dirty `●` in status bar; unsaved‑changes prompt on Open/Reload/Close;
 **Shift+mouse-wheel scrolls horizontally**; **custom slim dark scrollbar** (fixed-size thumb);
@@ -196,5 +208,9 @@ shortcuts **Ctrl+S / Ctrl+Shift+S / Ctrl+O / Ctrl+R**. Default window 760×560.
 - **XML add-element** produces no surrounding indent whitespace (the new node is appended without adjusting adjacent text nodes).
 - **CSV assumes a single delimiter per file** — mixed delimiters within one file are not handled.
 - **Bare-CR (old-Mac) line endings** in CSV files are not handled.
+- **Filter matches raw text**, not the escaped display — searching `\n` won't match a real newline.
+- With `UpdateSourceTrigger=PropertyChanged` editors (JSON string, XML text/CData), intermediate
+  keystrokes of a multi-char escape transiently commit partial values (typing `\t…` passes
+  through a real tab); final state is correct.
 - View smoke tests show the window off-screen to realize `ContentControl` templates without a real display.
 - Not built: JSON Schema validation, undo/redo, multi‑tab/multi‑file, raw‑text split view.

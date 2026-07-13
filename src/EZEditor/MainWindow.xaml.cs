@@ -9,6 +9,8 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using EZEditor.Converters;
+using EZEditor.Services;
 using EZEditor.ViewModels;
 
 namespace EZEditor;
@@ -130,6 +132,8 @@ public partial class MainWindow : Window
             BuildCsvColumns(grid, doc);
     }
 
+    private static readonly EscapedTextConverter CellEscape = new();
+
     private static void BuildCsvColumns(DataGrid grid, CsvDocument doc)
     {
         grid.Columns.Clear();
@@ -137,11 +141,12 @@ public partial class MainWindow : Window
         {
             grid.Columns.Add(new DataGridTextColumn
             {
-                Header = doc.Columns[i],
+                Header = TextEscaper.Escape(doc.Columns[i]),
                 Binding = new Binding($"[{i}]")
                 {
                     Mode = BindingMode.TwoWay,
-                    UpdateSourceTrigger = UpdateSourceTrigger.LostFocus
+                    UpdateSourceTrigger = UpdateSourceTrigger.LostFocus,
+                    Converter = CellEscape
                 },
                 Width = new DataGridLength(1, DataGridLengthUnitType.Star),
                 ElementStyle = grid.TryFindResource("CsvCellText") as Style,

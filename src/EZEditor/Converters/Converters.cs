@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
+using EZEditor.Services;
 
 namespace EZEditor.Converters;
 
@@ -37,4 +38,15 @@ public class InverseBoolToVisibilityConverter : IValueConverter
     public object Convert(object? value, Type t, object? p, CultureInfo c)
         => value is true ? Visibility.Collapsed : Visibility.Visible;
     public object ConvertBack(object? value, Type t, object? p, CultureInfo c) => Binding.DoNothing;
+}
+
+// Two-way display escaping for value/key editors: control characters render as
+// escape sequences (real newline shows as "\n", backslash as "\\") and typed
+// escapes commit the real character back to the document (see TextEscaper).
+public class EscapedTextConverter : IValueConverter
+{
+    public object? Convert(object? value, Type t, object? p, CultureInfo c)
+        => value is string s ? TextEscaper.Escape(s) : value;
+    public object? ConvertBack(object? value, Type t, object? p, CultureInfo c)
+        => value is string s ? TextEscaper.Unescape(s) : value;
 }
